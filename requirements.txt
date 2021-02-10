@@ -1,5 +1,5 @@
-python-telegram-bot == 13.2
-yfinance == 0.1.55
+python-telegram-bot==13.2
+yfinance==0.1.55
 matplotlib==3.3.4
 mplfinance==0.12.7a5
 requests==2.25.1
