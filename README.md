@@ -19,6 +19,8 @@ python bot.py
 
 ## TODO
 - [ ] Get README.md straight.
-- [ ] Keep tracking of already sent daily reports in a collections.defaultdict
+- [ ] Keep tracking of already sent daily reports in a `collections.defaultdict`
 - [ ] Add more features.
-- [ ] ...
+- [ ] Comment the whole code.
+- [ ] Proper logging to file.
+- [ ] Restructure `dataclass` files to sub-dir.
