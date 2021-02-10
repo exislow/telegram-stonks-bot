@@ -1,5 +1,0 @@
-WORKING_DIR=/home/telegram/telegram-stonks-bot/current
-USER=telegram
-GROUP=telegram
-
-# move to /etc/sysconfig/*

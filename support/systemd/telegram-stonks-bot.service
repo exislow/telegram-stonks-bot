@@ -6,10 +6,15 @@ Requires=network.service
 [Service]
 Type=simple
 EnvironmentFile=/etc/sysconfig/telegram-stonks-bot
-User=$USER
-Group=$GROUP
-WorkingDirectory=$WORKING_DIR
-ExecStart=python3 $WORKING_DIR/bot.py
+User=telegram
+Group=telegram
+WorkingDirectory=/home/telegram/telegram-stonks-bot/current
+ExecStart=/usr/local/bin/python3 /home/telegram/telegram-stonks-bot/current/bot.py
+SyslogIdentifier=telegram-stonks-bot
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
