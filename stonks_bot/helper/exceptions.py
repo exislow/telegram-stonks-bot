@@ -1,0 +1,2 @@
+class InvalidSymbol(Exception):
+    pass

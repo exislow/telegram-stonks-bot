@@ -1,0 +1,17 @@
+[Unit]
+Description=Celery Beat Service
+After=toolbox-backend-celery.service
+Requires=mongod.service redis.service toolbox-backend.service toolbox-backend-celery.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+EnvironmentFile=/etc/sysconfig/telegram-stonks-bot
+WorkingDirectory=${WORKING_DIR}
+ExecStart=python3 ${WORKING_DIR}/bot.py
+
+[Install]
+WantedBy=multi-user.target
+
+# move to move to /etc/systemd/system/*

@@ -1,0 +1,93 @@
+"""Application Configuration."""
+
+
+class Config(object):
+    """Parent configuration class."""
+
+    DEBUG = False
+    TESTING = False
+
+    PERSISTENCE_NAME = 'stonks_store'
+
+    USER_ID = {
+        'master': <ID>,
+        'admins': [<ID>]
+    }
+
+    LOCAL = {
+        'tz': 'Europe/Berlin',
+        'currency': 'EUR'
+    }
+
+    API = {
+        'telegram_bot_id': 'TELEGRAM BOT KEY',
+        'finance_currency': 'USD'
+    }
+
+    OHLC = {
+        'adj_close': 'Adj Close'
+    }
+
+    JOBS = {
+        'check_rise_fall_day': {
+            'interval_sec': 300,
+            'threshold_perc_rise': 2,
+            'threshold_perc_fall': -2,
+            'prefix': {
+                'msg_last_rise': 'msg_last_rise_',
+                'msg_last_fall': 'msg_last_fall_',
+            }
+        }
+    }
+
+    INTERNALS = {
+        'groups': 'groups',
+        'stock': 'stonks'
+    }
+
+
+class DevelopmentConfig(Config):
+    """Configurations for Development."""
+
+    def __init__(self):
+        Config.__init__(self)
+
+        self.DEBUG = True
+
+
+class TestingConfig(Config):
+    """Configurations for Testing."""
+
+    def __init__(self):
+        Config.__init__(self)
+
+        self.TESTING = True
+        self.DEBUG = True
+
+
+class StagingConfig(Config):
+    """Configurations for Staging."""
+
+    def __init__(self):
+        Config.__init__(self)
+
+        self.DEBUG = False
+
+
+class ProductionConfig(Config):
+    """Configurations for Production."""
+
+    def __init__(self):
+        Config.__init__(self)
+        self.DEBUG = False
+        self.TESTING = False
+
+
+config = {
+    'development': DevelopmentConfig,
+    'testing': TestingConfig,
+    'staging': StagingConfig,
+    'production': ProductionConfig,
+
+    'default': ProductionConfig
+}
