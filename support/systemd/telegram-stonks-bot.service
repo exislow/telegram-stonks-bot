@@ -5,11 +5,10 @@ Requires=network.service
 
 [Service]
 Type=simple
-EnvironmentFile=/etc/sysconfig/telegram-stonks-bot
 User=telegram
 Group=telegram
 WorkingDirectory=/home/telegram/telegram-stonks-bot/current
-ExecStart=/usr/local/bin/python3 /home/telegram/telegram-stonks-bot/current/bot.py
+ExecStart=venv/bin/python3 bot.py
 SyslogIdentifier=telegram-stonks-bot
 StandardOutput=syslog
 StandardError=syslog
