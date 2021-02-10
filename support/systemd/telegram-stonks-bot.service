@@ -5,11 +5,11 @@ Requires=network.service
 
 [Service]
 Type=simple
-User=${USER}
-Group=${GROUP}
 EnvironmentFile=/etc/sysconfig/telegram-stonks-bot
-WorkingDirectory=${WORKING_DIR}
-ExecStart=python3 ${WORKING_DIR}/bot.py
+User=$USER
+Group=$GROUP
+WorkingDirectory=$WORKING_DIR
+ExecStart=python3 $WORKING_DIR/bot.py
 
 [Install]
 WantedBy=multi-user.target
