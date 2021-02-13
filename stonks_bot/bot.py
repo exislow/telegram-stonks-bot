@@ -22,7 +22,6 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Union
 
-from nested_dict import nested_dict
 from telegram import Update, ParseMode, Message, Chat
 from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersistence, MessageHandler, Filters
 
@@ -280,9 +279,10 @@ def factory():
     return defaultdict(factory)
 
 
-def get_daily_dict(chat_data: dict) -> nested_dict:
+def get_daily_dict(chat_data: dict) -> defaultdict:
     d = chat_data.get(conf.JOBS['check_rise_fall_day']['dict']['daily'], factory())
     chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']] = d
+
     return d
 
 
