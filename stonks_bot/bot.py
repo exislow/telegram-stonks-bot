@@ -73,7 +73,7 @@ def help(update: Update, context: CallbackContext) -> None:
 - /list_price (/lp) -> List watchlist prices.
 - /chart <SYMBOL> (/c) -> Plot the last trading day of a stock."""
 
-    reply_message(reply)
+    reply_message(update, reply)
 
 
 def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
@@ -96,7 +96,7 @@ def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
     stonks[s.symbol] = s
     context.chat_data[conf.INTERNALS['stock']] = stonks
 
-    reply_message(reply)
+    reply_message(update, reply)
 
 
 def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
@@ -115,7 +115,7 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
     else:
         reply = f'⚠️ Symbol *{symbol}* is not in watchlist\.'
 
-    reply_message(update, reply, parse_mode=ParseMode.MARKDOWN_V2)
+    reply_message(update, update, reply, parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @restricted
@@ -123,7 +123,7 @@ def stonk_clear(update: Update, context: CallbackContext) -> None:
     context.chat_data[conf.INTERNALS['stock']] = {}
     reply = f'🖤 Watch list purged.'
 
-    reply_message(reply)
+    reply_message(update, reply)
 
 
 def stonk_list(update: Update, context: CallbackContext) -> None:
@@ -138,10 +138,10 @@ def stonk_list(update: Update, context: CallbackContext) -> None:
     else:
         reply = '🧻🤲 Watch list is empty.'
 
-    reply_message(reply)
+    reply_message(update, reply)
 
 
-# def list_price1(update: Update, context: CallbackContext) -> None:
+# def list_price(update: Update, context: CallbackContext) -> None:
 #     stonks = context.chat_data.get(STONKS, {})
 #     reply = ''
 #
@@ -166,7 +166,7 @@ def stonk_list(update: Update, context: CallbackContext) -> None:
 #     else:
 #         reply = '🧻🤲 Watch list is empty.'
 #
-#     reply_message(reply)
+#     reply_message(update, reply)
 
 
 def list_price(update: Update, context: CallbackContext) -> None:
@@ -184,7 +184,7 @@ def list_price(update: Update, context: CallbackContext) -> None:
     else:
         reply = '🧻🤲 Watch list is empty.'
 
-    reply_message(reply)
+    reply_message(update, reply)
 
 
 @send_typing_action
