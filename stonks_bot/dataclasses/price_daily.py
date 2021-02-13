@@ -17,12 +17,6 @@ class PriceDaily:
     @property
     def percent(self) -> float:
         res_div = self.close / self.open
+        percent = ((res_div - 1) * 100).round(2)
 
-        if self.close > self.open:
-            percentage = (res_div - 1) * 100
-        else:
-            percentage = (1 - res_div) * 100
-
-        percentage = percentage.round(2)
-
-        return percentage
+        return percent

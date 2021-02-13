@@ -172,20 +172,20 @@ def stonk_list(update: Update, context: CallbackContext) -> None:
 
 def list_price(update: Update, context: CallbackContext) -> None:
     stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
-    reply = ''
 
     if len(stonks) > 0:
+        reply = f"📊SYMBOL: ⬆️HIGH ⬇️️LOW 🛬CLOSE = DIFF. ({conf.LOCAL['currency']})\n"
+
         for k, s in stonks.items():
             pd = s.price_daily()
-            diff_txt = f'🚀{pd.diff}' if pd.diff > 0 else f'📉{pd.diff}'
-            reply += f"📊 {s.symbol}: ⬆️{pd.high} ⬇️️{pd.low} 🛬{pd.close} {diff_txt} ({conf.LOCAL['currency']}) " \
-                     f"{pd.percent}%\n"
+            diff_txt = f'🚀+{pd.percent}% ({pd.diff})' if pd.diff > 0 else f'📉{pd.percent}% ({pd.diff})'
+            reply += f"📊{s.symbol}: ⬆️{pd.high} ⬇️️{pd.low} 🛬{pd.close} = {diff_txt}\n"
 
-        reply = reply[0:-1]
+        reply = f'<pre>{reply[0:-1]}</pre>'
     else:
         reply = '🧻🤲 Watch list is empty.'
 
-    reply_message(update, reply)
+    reply_message(update, reply, parse_mode=ParseMode.HTML)
 
 
 @send_typing_action
