@@ -1,8 +1,9 @@
 import giphy_client
+from giphy_client import InlineResponse2002
 from giphy_client.rest import ApiException
 
 
-def gif_random(search_term: str) -> None:
+def gif_random(search_term: str) -> InlineResponse2002:
     # create an instance of the API class
     api_instance = giphy_client.DefaultApi()
     api_key = 'ni2nGePDV3EGTmAFw45yPrVJEvOQ5Pm1'  # str | Giphy API Key.

@@ -23,4 +23,5 @@ python bot.py
 - [ ] Add more features.
 - [ ] Comment the whole code.
 - [ ] Proper logging to file.
-- [ ] Restructure `dataclass` files to sub-dir.
+- [ ] Optimize traffic usage: Keep symbols in bot_data and link them to chat_data
+- [ ] Method to send logs to MASTER

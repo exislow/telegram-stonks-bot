@@ -21,14 +21,15 @@ import traceback
 from datetime import datetime
 from typing import Union
 
-from telegram import Update, ParseMode
+from telegram import Update, ParseMode, Message, Chat
 from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersistence, MessageHandler, Filters
 
 # Enable logging
 from stonks_bot.helper.args import check_arg_symbol
 from stonks_bot.helper.command import restricted, send_typing_action
 from stonks_bot.helper.exceptions import InvalidSymbol
-from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message
+from stonks_bot.helper.math import round_currency_scalar
+from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo
 from stonks_bot.stonk import Stonk
 from stonks_bot import conf
 
@@ -188,7 +189,7 @@ def list_price(update: Update, context: CallbackContext) -> None:
 
 
 @send_typing_action
-def chart(update: Update, context: CallbackContext) -> Union[None, bool]:
+def chart(update: Update, context: CallbackContext, reply=True) -> Union[None, bool]:
     symbol = check_arg_symbol(update, context.args)
 
     if not symbol:
@@ -203,7 +204,10 @@ def chart(update: Update, context: CallbackContext) -> Union[None, bool]:
 
     c_buf = s.chart()
 
-    reply_with_photo(update, context, c_buf)
+    if reply:
+        reply_with_photo(update, c_buf)
+    else:
+        send_photo(update, context, c_buf)
 
 
 def check_rise_fall_day(context: CallbackContext) -> None:
@@ -214,6 +218,9 @@ def check_rise_fall_day(context: CallbackContext) -> None:
 
     for c_id, cd in chat_data.items():
         stonks = cd.get(conf.INTERNALS['stock'], {})
+        chat_custom = Chat(c_id, 'group')
+        message_custom = Message(0, datetime_now, chat=chat_custom)
+        update_custom = Update(0, message=message_custom)
 
         for symbol, stonk in stonks.items():
             # TODO: I need a better solution to track chat based values.
@@ -221,6 +228,7 @@ def check_rise_fall_day(context: CallbackContext) -> None:
             key_msg_last_fall = conf.JOBS['check_rise_fall_day']['prefix']['msg_last_rise'] + symbol
             msg_last_rise_at = cd.get(key_msg_last_rise, datetime_zero)
             msg_last_fall_at = cd.get(key_msg_last_fall, datetime_zero)
+            context.args = [symbol]
 
             if msg_last_rise_at.date() == date_now and msg_last_fall_at.date() == date_now:
                 continue
@@ -230,18 +238,19 @@ def check_rise_fall_day(context: CallbackContext) -> None:
             if res_calc:
                 if stonk.daily_rise.calculated_at.date() == date_now:
                     if stonk.daily_rise.percent >= conf.JOBS['check_rise_fall_day']['threshold_perc_rise']:
-                        reply = f"🚀🚀🚀 {stonk.name} ({stonk.symbol}) is rocketing to {stonk.daily_rise.price} " \
-                                f"{conf.LOCAL['currency']} (+{stonk.daily_rise.percent}%)"
+                        reply = f"🚀🚀🚀 {stonk.name} ({stonk.symbol}) is rocketing to {round_currency_scalar(stonk.daily_rise.price)} " \
+                                f"{conf.LOCAL['currency']} (+{stonk.daily_rise.percent.round(2)}%)"
                         context.bot.send_message(c_id, text=reply)
+                        chart(update_custom, context, reply=False)
 
                         cd.update({key_msg_last_rise: datetime_now})
 
-
                 if stonk.daily_fall.calculated_at.date() == date_now:
                     if stonk.daily_fall.percent <= conf.JOBS['check_rise_fall_day']['threshold_perc_fall']:
-                        reply = f"📉📉📉 {stonk.name} ({stonk.symbol}) is drowning to {stonk.daily_fall.price} " \
-                                f"{conf.LOCAL['currency']} ({stonk.daily_fall.percent}%)"
+                        reply = f"📉📉📉 {stonk.name} ({stonk.symbol}) is drowning to {round_currency_scalar(stonk.daily_fall.price)} " \
+                                f"{conf.LOCAL['currency']} ({stonk.daily_fall.percent.round(2)}%)"
                         context.bot.send_message(c_id, text=reply)
+                        chart(update_custom, context, reply=False)
 
                         cd.update({key_msg_last_fall + symbol: datetime_now})
 

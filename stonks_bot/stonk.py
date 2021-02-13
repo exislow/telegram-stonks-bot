@@ -129,17 +129,17 @@ class Stonk(object):
         if price_date == date_now:
             if self.daily_rise.calculated_at.date() < date_now:
                 if price_max > price_open:
-                    percent = (((price_max / price_open) - 1) * 100).round(2)
+                    percent = (((price_max / price_open) - 1) * 100)
 
-                    self.daily_rise.percent = price_max
+                    self.daily_rise.price = price_max
                     self.daily_rise.percent = percent
                     self.daily_rise.calculated_at = datetime_now
 
             if self.daily_fall.calculated_at.date() < date_now:
                 if price_min < price_open:
-                    percent = (((price_min / price_open) - 1) * 100).round(2)
+                    percent = (((price_min / price_open) - 1) * 100)
 
-                    self.daily_fall.percent = price_min
+                    self.daily_fall.price = price_min
                     self.daily_fall.percent = percent
                     self.daily_fall.calculated_at = datetime_now
             return True
