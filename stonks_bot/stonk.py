@@ -1,17 +1,17 @@
 from datetime import datetime
-from typing import Union
 from io import BytesIO
+from typing import Union
 
+import pandas as pd
 import requests
 import yfinance as yf
-import pandas as pd
 
 from stonks_bot import c, conf
+from stonks_bot.dataclasses.performance import Performance
+from stonks_bot.dataclasses.price_daily import PriceDaily
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.plot import create_candle_chart
-from stonks_bot.dataclasses.performance import Performance
-from stonks_bot.dataclasses.price_daily import PriceDaily
 
 
 class Stonk(object):
@@ -91,7 +91,7 @@ class Stonk(object):
                 yf_df.index = yf_df.index.tz_convert(conf.LOCAL['tz'])
         except AttributeError as ae:
             # TODO: Log it / send it to master
-            pass
+            raise AttributeError(msg=yf_df.to_dict())
 
         return yf_df
 

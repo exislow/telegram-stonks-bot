@@ -18,20 +18,21 @@ import html
 import json
 import logging
 import traceback
+from collections import defaultdict
 from datetime import datetime
 from typing import Union
 
+from nested_dict import nested_dict
 from telegram import Update, ParseMode, Message, Chat
 from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersistence, MessageHandler, Filters
 
-# Enable logging
+from stonks_bot import conf
 from stonks_bot.helper.args import check_arg_symbol
 from stonks_bot.helper.command import restricted, send_typing_action
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo
 from stonks_bot.stonk import Stonk
-from stonks_bot import conf
 
 logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -211,7 +212,7 @@ def chart(update: Update, context: CallbackContext, reply=True) -> Union[None, b
 
 
 def check_rise_fall_day(context: CallbackContext) -> None:
-    chat_data = context.job.context['chat_data']
+    chat_data = context.job.context.dispatcher.chat_data
     datetime_now = datetime.now()
     date_now = datetime_now.date()
     datetime_zero = datetime.fromtimestamp(0)
@@ -221,38 +222,40 @@ def check_rise_fall_day(context: CallbackContext) -> None:
         chat_custom = Chat(c_id, 'group')
         message_custom = Message(0, datetime_now, chat=chat_custom)
         update_custom = Update(0, message=message_custom)
+        msg_daily = get_daily_dict(cd)
+        daily_rise = msg_daily[conf.JOBS['check_rise_fall_day']['dict']['rise']]
+        daily_fall = msg_daily[conf.JOBS['check_rise_fall_day']['dict']['fall']]
 
         for symbol, stonk in stonks.items():
-            # TODO: I need a better solution to track chat based values.
-            key_msg_last_rise = conf.JOBS['check_rise_fall_day']['prefix']['msg_last_rise'] + symbol
-            key_msg_last_fall = conf.JOBS['check_rise_fall_day']['prefix']['msg_last_rise'] + symbol
-            msg_last_rise_at = cd.get(key_msg_last_rise, datetime_zero)
-            msg_last_fall_at = cd.get(key_msg_last_fall, datetime_zero)
+            msg_last_rise_at = daily_rise.get(symbol, datetime_zero).date()
+            msg_last_fall_at = daily_fall.get(symbol, datetime_zero).date()
             context.args = [symbol]
 
-            if msg_last_rise_at.date() == date_now and msg_last_fall_at.date() == date_now:
+            if msg_last_rise_at == date_now and msg_last_fall_at == date_now:
                 continue
 
             res_calc = stonk.calculate_perf_rise_fall_daily()
 
             if res_calc:
-                if stonk.daily_rise.calculated_at.date() == date_now:
+                if stonk.daily_rise.calculated_at.date() == date_now and msg_last_rise_at < date_now:
                     if stonk.daily_rise.percent >= conf.JOBS['check_rise_fall_day']['threshold_perc_rise']:
-                        reply = f"🚀🚀🚀 {stonk.name} ({stonk.symbol}) is rocketing to {round_currency_scalar(stonk.daily_rise.price)} " \
+                        reply = f"🚀🚀🚀 {stonk.name} ({stonk.symbol}) is rocketing to " \
+                                f"{round_currency_scalar(stonk.daily_rise.price)} " \
                                 f"{conf.LOCAL['currency']} (+{stonk.daily_rise.percent.round(2)}%)"
                         context.bot.send_message(c_id, text=reply)
                         chart(update_custom, context, reply=False)
 
-                        cd.update({key_msg_last_rise: datetime_now})
+                        daily_rise[symbol] = datetime_now
 
-                if stonk.daily_fall.calculated_at.date() == date_now:
+                if stonk.daily_fall.calculated_at.date() == date_now and msg_last_fall_at < date_now:
                     if stonk.daily_fall.percent <= conf.JOBS['check_rise_fall_day']['threshold_perc_fall']:
-                        reply = f"📉📉📉 {stonk.name} ({stonk.symbol}) is drowning to {round_currency_scalar(stonk.daily_fall.price)} " \
+                        reply = f"📉📉📉 {stonk.name} ({stonk.symbol}) is drow" \
+                                f"ning to {round_currency_scalar(stonk.daily_fall.price)} " \
                                 f"{conf.LOCAL['currency']} ({stonk.daily_fall.percent.round(2)}%)"
                         context.bot.send_message(c_id, text=reply)
                         chart(update_custom, context, reply=False)
 
-                        cd.update({key_msg_last_fall + symbol: datetime_now})
+                        daily_fall[symbol] = datetime_now
 
 
 def added_to_group(update: Update, context: CallbackContext):
@@ -267,6 +270,20 @@ def removed_from_group(update: Update, context: CallbackContext):
         g = context.bot_data.get(conf.INTERNALS['groups'], {})
         g.pop(update.message.chat_id, None)
         context.bot_data[conf.INTERNALS['groups']] = g
+
+
+def bot_init(updater: Updater) -> None:
+    pass
+
+
+def factory():
+    return defaultdict(factory)
+
+
+def get_daily_dict(chat_data: dict) -> nested_dict:
+    d = chat_data.get(conf.JOBS['check_rise_fall_day']['dict']['daily'], factory())
+    chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']] = d
+    return d
 
 
 def main():
@@ -304,7 +321,9 @@ def main():
     # Job queue stuff
     job_queue = updater.job_queue
     job_queue.run_repeating(check_rise_fall_day, conf.JOBS['check_rise_fall_day']['interval_sec'],
-                            context={'chat_data': updater.dispatcher.chat_data})
+                            context=updater)
+
+    bot_init(updater)
 
     # Start the Bot
     updater.start_polling()

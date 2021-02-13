@@ -19,9 +19,7 @@ python bot.py
 
 ## TODO
 - [ ] Get README.md straight.
-- [ ] Keep tracking of already sent daily reports in a `collections.defaultdict`
 - [ ] Add more features.
 - [ ] Comment the whole code.
 - [ ] Proper logging to file.
 - [ ] Optimize traffic usage: Keep symbols in bot_data and link them to chat_data
-- [ ] Method to send logs to MASTER
