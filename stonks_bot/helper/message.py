@@ -21,3 +21,9 @@ def reply_symbol_error(update: Update, symbol: str) -> None:
     reply = f'❌ Symbol *{symbol}* does not exist\.'
 
     update.message.reply_text(reply, parse_mode=ParseMode.MARKDOWN_V2)
+
+
+def reply_message(update: Update, text: str, parse_mode=None) -> None:
+    msg = update.message if update.message else update.edited_message
+
+    msg.reply_text(text, parse_mode=parse_mode)

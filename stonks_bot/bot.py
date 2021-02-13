@@ -28,7 +28,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersist
 from stonks_bot.helper.args import check_arg_symbol
 from stonks_bot.helper.command import restricted, send_typing_action
 from stonks_bot.helper.exceptions import InvalidSymbol
-from stonks_bot.helper.message import reply_with_photo, reply_symbol_error
+from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message
 from stonks_bot.stonk import Stonk
 from stonks_bot import conf
 
@@ -73,7 +73,7 @@ def help(update: Update, context: CallbackContext) -> None:
 - /list_price (/lp) -> List watchlist prices.
 - /chart <SYMBOL> (/c) -> Plot the last trading day of a stock."""
 
-    update.message.reply_text(reply)
+    reply_message(reply)
 
 
 def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
@@ -96,7 +96,7 @@ def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
     stonks[s.symbol] = s
     context.chat_data[conf.INTERNALS['stock']] = stonks
 
-    update.message.reply_text(reply)
+    reply_message(reply)
 
 
 def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
@@ -107,7 +107,6 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
 
     symbol: str = symbol.upper()
     stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
-    reply = ''
 
     if symbol in stonks:
         stonks.pop(symbol, None)
@@ -116,7 +115,7 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
     else:
         reply = f'⚠️ Symbol *{symbol}* is not in watchlist\.'
 
-    update.message.reply_text(reply, parse_mode=ParseMode.MARKDOWN_V2)
+    reply_message(update, reply, parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @restricted
@@ -124,7 +123,7 @@ def stonk_clear(update: Update, context: CallbackContext) -> None:
     context.chat_data[conf.INTERNALS['stock']] = {}
     reply = f'🖤 Watch list purged.'
 
-    update.message.reply_text(reply)
+    reply_message(reply)
 
 
 def stonk_list(update: Update, context: CallbackContext) -> None:
@@ -132,14 +131,14 @@ def stonk_list(update: Update, context: CallbackContext) -> None:
     reply = ''
 
     if len(stonks) > 0:
-        for k in stonks.keys():
+        for k in sorted(stonks.keys()):
             reply += f'💎 {stonks[k].name} ({k})\n'
 
         reply = reply[0:-1]
     else:
         reply = '🧻🤲 Watch list is empty.'
 
-    update.message.reply_text(reply)
+    reply_message(reply)
 
 
 # def list_price1(update: Update, context: CallbackContext) -> None:
@@ -167,7 +166,7 @@ def stonk_list(update: Update, context: CallbackContext) -> None:
 #     else:
 #         reply = '🧻🤲 Watch list is empty.'
 #
-#     update.message.reply_text(reply)
+#     reply_message(reply)
 
 
 def list_price(update: Update, context: CallbackContext) -> None:
@@ -185,7 +184,7 @@ def list_price(update: Update, context: CallbackContext) -> None:
     else:
         reply = '🧻🤲 Watch list is empty.'
 
-    update.message.reply_text(reply)
+    reply_message(reply)
 
 
 @send_typing_action
