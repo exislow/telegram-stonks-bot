@@ -33,9 +33,10 @@ class Config(object):
             'interval_sec': 300,
             'threshold_perc_rise': 5,
             'threshold_perc_fall': -5,
-            'prefix': {
-                'msg_last_rise': 'msg_last_rise_',
-                'msg_last_fall': 'msg_last_fall_',
+            'dict': {
+                'daily': 'daily',
+                'rise': 'msg_rise_at',
+                'fall': 'msg_fall_at'
             }
         }
     }

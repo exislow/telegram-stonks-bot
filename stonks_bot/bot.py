@@ -28,6 +28,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersist
 from stonks_bot import conf
 from stonks_bot.helper.args import check_arg_symbol
 from stonks_bot.helper.command import restricted, send_typing_action
+from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo
@@ -112,6 +113,9 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
     if symbol in stonks:
         stonks.pop(symbol, None)
         context.chat_data[conf.INTERNALS['stock']] = stonks
+        msg_daily = get_daily_dict(context.chat_data)
+        msg_daily[conf.JOBS['check_rise_fall_day']['dict']['rise']].pop(symbol, None)
+        msg_daily[conf.JOBS['check_rise_fall_day']['dict']['fall']].pop(symbol, None)
         reply = f'✅ Symbol *{symbol}* was removed\.'
     else:
         reply = f'⚠️ Symbol *{symbol}* is not in watchlist\.'
@@ -122,6 +126,7 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
 @restricted
 def stonk_clear(update: Update, context: CallbackContext) -> None:
     context.chat_data[conf.INTERNALS['stock']] = {}
+    clear_daily_dict(context.chat_data)
     reply = f'🖤 Watch list purged.'
 
     reply_message(update, reply)
@@ -140,34 +145,6 @@ def stonk_list(update: Update, context: CallbackContext) -> None:
         reply = '🧻🤲 Watch list is empty.'
 
     reply_message(update, reply)
-
-
-# def list_price(update: Update, context: CallbackContext) -> None:
-#     stonks = context.chat_data.get(STONKS, {})
-#     reply = ''
-#
-#     if len(stonks) > 0:
-#         symbols = list(stonks.keys())
-#         symbols_txt = ' '.join(symbols)
-#
-#         yf_df = yf.download(tickers=symbols_txt, period='1d', interval='1d', group_by='ticker', prepost=True,
-#                             rounding=True)
-#         yf_df_eur = 1  # usd_to_eur(yf_df, rounding=4)
-#
-#         for k in symbols:
-#             if len(symbols) == 1:
-#                 t = yf_df_eur
-#             else:
-#                 t = yf_df_eur[k]
-#             diff = round(t.Close[0] - t.Open[0], 2)
-#             diff_txt = f'🚀{diff}' if diff > 0 else f'📉{diff}'
-#             reply += f'📊 {k}: ⬆️{t.High[0]} ⬇️️{t.Low[0]} 🛬{t.Close[0]} {diff_txt} (EUR)\n'
-#
-#         reply = reply[0:-1]
-#     else:
-#         reply = '🧻🤲 Watch list is empty.'
-#
-#     reply_message(update, reply)
 
 
 def list_price(update: Update, context: CallbackContext) -> None:
@@ -275,15 +252,17 @@ def bot_init(updater: Updater) -> None:
     pass
 
 
-def factory():
-    return defaultdict(factory)
-
-
 def get_daily_dict(chat_data: dict) -> defaultdict:
-    d = chat_data.get(conf.JOBS['check_rise_fall_day']['dict']['daily'], factory())
+    d = chat_data.get(conf.JOBS['check_rise_fall_day']['dict']['daily'], factory_defaultdict())
     chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']] = d
 
-    return d
+    return chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']]
+
+
+def clear_daily_dict(chat_data: dict) -> defaultdict:
+    chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']] = factory_defaultdict()
+
+    return chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']]
 
 
 def main():
