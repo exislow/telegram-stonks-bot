@@ -10,8 +10,8 @@ from stonks_bot import c, conf
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.plot import create_candle_chart
-from stonks_bot.performance import Performance
-from stonks_bot.price_daily import PriceDaily
+from stonks_bot.dataclasses.performance import Performance
+from stonks_bot.dataclasses.price_daily import PriceDaily
 
 
 class Stonk(object):
@@ -86,8 +86,12 @@ class Stonk(object):
         return yf_df
 
     def _convert_to_local_time(self, yf_df):
-        if yf_df.index.tzinfo is not None and yf_df.index.tzinfo.utcoffset(yf_df.index) is not None:
-            yf_df.index = yf_df.index.tz_convert(conf.LOCAL['tz'])
+        try:
+            if yf_df.index.tzinfo is not None and yf_df.index.tzinfo.utcoffset(yf_df.index) is not None:
+                yf_df.index = yf_df.index.tz_convert(conf.LOCAL['tz'])
+        except AttributeError as ae:
+            # TODO: Log it / send it to master
+            pass
 
         return yf_df
 

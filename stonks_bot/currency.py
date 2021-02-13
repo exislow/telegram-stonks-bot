@@ -3,7 +3,7 @@ from typing import Union
 
 import yfinance as yf
 
-from stonks_bot.currency_exchange import CurrencyExchange
+from stonks_bot.dataclasses.currency_exchange import CurrencyExchange
 from stonks_bot import conf
 
 
