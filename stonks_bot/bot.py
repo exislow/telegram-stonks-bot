@@ -176,7 +176,7 @@ def list_price(update: Update, context: CallbackContext) -> None:
     if len(stonks) > 0:
         reply = f"📊SYMBOL: ⬆️HIGH ⬇️️LOW 🛬CLOSE = DIFF. ({conf.LOCAL['currency']})\n"
 
-        for k, s in stonks.items():
+        for k, s in sorted(stonks.items()):
             pd = s.price_daily()
             diff_txt = f'🚀+{pd.percent}% ({pd.diff})' if pd.diff > 0 else f'📉{pd.percent}% ({pd.diff})'
             reply += f"📊{s.symbol}: ⬆️{pd.high} ⬇️️{pd.low} 🛬{pd.close} = {diff_txt}\n"
