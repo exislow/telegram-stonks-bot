@@ -31,7 +31,8 @@ from stonks_bot.helper.command import restricted, send_typing_action
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.math import round_currency_scalar
-from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo
+from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
+    reply_command_unknown
 from stonks_bot.stonk import Stonk
 
 logging.basicConfig(
@@ -65,6 +66,10 @@ def error_handler(update: Update, context: CallbackContext) -> None:
 
     # Finally, send the message
     context.bot.send_message(chat_id=conf.USER_ID['master'], text=message, parse_mode=ParseMode.HTML)
+
+
+def command_unknown(update, context):
+    reply_command_unknown(update)
 
 
 def help(update: Update, context: CallbackContext) -> None:
@@ -296,6 +301,9 @@ def main():
     dispatcher.add_handler(MessageHandler(Filters.status_update.new_chat_members |
                                           Filters.status_update.chat_created, added_to_group))
     dispatcher.add_handler(MessageHandler(Filters.status_update.left_chat_member, removed_from_group))
+
+    # Unknown command. this handler must be added last.
+    dispatcher.add_handler(MessageHandler(Filters.command, command_unknown))
 
     # Job queue stuff
     job_queue = updater.job_queue

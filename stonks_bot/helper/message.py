@@ -39,3 +39,10 @@ def get_message(update: Update) -> Message:
     msg = update.effective_message
 
     return msg
+
+
+def reply_command_unknown(update: Update, command: str):
+    reply = f'❌ This command does not exist.'
+
+    reply_message(update, reply, parse_mode=ParseMode.MARKDOWN_V2)
+    reply_random_gif(update, 'what')
