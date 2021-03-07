@@ -26,8 +26,10 @@ from telegram import Update, ParseMode, Message, Chat
 from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersistence, MessageHandler, Filters
 
 from stonks_bot import conf
+from stonks_bot.discovery import Discovery
 from stonks_bot.helper.args import check_arg_symbol
-from stonks_bot.helper.command import restricted_command, send_typing_action, bot_added_to_group, check_symbol_limit
+from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit
+from stonks_bot.actions import bot_added_to_group
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.math import round_currency_scalar
@@ -42,10 +44,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def error_handler(update: Update, context: CallbackContext) -> None:
+def exception_handler(update: Update, context: CallbackContext) -> None:
     """Log the error and send a telegram message to notify the developer."""
     # Log the error before we do anything else, so we can see it even if something breaks.
-    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    logger.error(msg='Exception while handling an update:', exc_info=context.error)
 
     # traceback.format_exception returns the usual python message about an exception, but as a
     # list of strings rather than a single string, so we have to join them together.
@@ -56,9 +58,9 @@ def error_handler(update: Update, context: CallbackContext) -> None:
     # You might need to add some logic to deal with messages longer than the 4096 character limit.
     update_dict = update.to_dict() if isinstance(update, Update) else None
     message = (
-        f'An exception was raised while handling an update\n'
-        f'<pre>update = {html.escape(json.dumps(update_dict, indent=2, ensure_ascii=False))}'
-        '</pre>\n\n'
+        f'An exception was raised while handling an update.\n'
+        f'<pre>update = {html.escape(json.dumps(update_dict, indent=2, ensure_ascii=False))}</pre>\n\n'
+        f'<pre>context.bot_data = {html.escape(str(context.bot_data))}</pre>\n\n'
         f'<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n'
         f'<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n'
         f'<pre>{html.escape(tb_string)}</pre>'
@@ -68,17 +70,17 @@ def error_handler(update: Update, context: CallbackContext) -> None:
     context.bot.send_message(chat_id=conf.USER_ID['master'], text=message, parse_mode=ParseMode.HTML)
 
 
-def command_unknown(update, context):
+def command_unknown(update: Update, context: CallbackContext) -> None:
     reply_command_unknown(update)
 
 
 def help(update: Update, context: CallbackContext) -> None:
     reply = """Hi, I am the STONKS BOT! Try to use the following commands:
-- /stonk_add <SYMBOL/ISIN> (/sa) -> Add a stock to the watchlist.
-- /stonk_del <SYMBOL/ISIN> (/sd) -> Delete a stock from the watchlist.
-- /stonk_list (/sl) -> Show the Watchlist
-- /list_price (/lp) -> List watchlist prices.
-- /chart <SYMBOL> (/c) -> Plot the last trading day of a stock."""
+* /stonk_add <SYMBOL/ISIN> (/sa) -> Add a stock to the watchlist.
+* /stonk_del <SYMBOL/ISIN> (/sd) -> Delete a stock from the watchlist.
+* /stonk_list (/sl) -> Show the Watchlist
+* /list_price (/lp) -> List watchlist prices.
+* /chart <SYMBOL> (/c) -> Plot the last trading day of a stock."""
 
     reply_message(update, reply)
 
@@ -153,6 +155,7 @@ def stonk_list(update: Update, context: CallbackContext) -> None:
     reply_message(update, reply)
 
 
+@send_typing_action
 def list_price(update: Update, context: CallbackContext) -> None:
     stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
 
@@ -269,6 +272,57 @@ def clear_daily_dict(chat_data: dict) -> defaultdict:
     return chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']]
 
 
+def discovery_websites(update: Update, context: CallbackContext):
+    d = Discovery()
+    message_html = '🔍 Useful discovery sources:\n'
+
+    for item in d.websites:
+        message_html += f"* <a href=\"{item['url']}\">{item['description']}</>\n"
+
+    reply_message(update, message_html, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def sector_performance(update: Update, context: CallbackContext):
+    d = Discovery()
+    c_buf = d.performance_sectors_sp500()
+
+    send_photo(update, context, c_buf)
+
+
+@send_typing_action
+def upcoming_earnings(update: Update, context: CallbackContext):
+    d = Discovery()
+    uc = d.upcoming_earnings()
+
+
+@send_typing_action
+def stonk_upcoming_earnings(update: Update, context: CallbackContext):
+    # TODO: Optimize this to load all smybol events in one go instead of per symbol.
+    stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
+
+    if len(stonks) > 0:
+        now = datetime.now()
+        reply = ''
+
+        for k, s in sorted(stonks.items()):
+            ue = s.upcoming_earning()
+            date = 'N/A'
+            days_left = 'N/A'
+
+            if ue:
+                date = ue.strftime('%Y-%m-%d')
+                days_left = (ue - now).days
+
+            reply += f'📅 {s.name} ({s.symbol}) -> {date} ({days_left} days)\n'
+
+        reply = reply[0:-1]
+    else:
+        reply = '🧻🤲 Watch list is empty.'
+
+    reply_message(update, reply, parse_mode=ParseMode.HTML)
+
+
 def main():
     """Run bot."""
     persist = PicklePersistence(filename=f'{conf.PERSISTENCE_NAME}.pickle')
@@ -292,9 +346,17 @@ def main():
     dispatcher.add_handler(CommandHandler('lp', list_price, run_async=True))
     dispatcher.add_handler(CommandHandler('chart', chart, run_async=True))
     dispatcher.add_handler(CommandHandler('c', chart, run_async=True))
+    dispatcher.add_handler(CommandHandler('discovery', discovery_websites, run_async=True))
+    dispatcher.add_handler(CommandHandler('d', discovery_websites, run_async=True))
+    dispatcher.add_handler(CommandHandler('sector_performance', sector_performance, run_async=True))
+    dispatcher.add_handler(CommandHandler('sp', sector_performance, run_async=True))
+    dispatcher.add_handler(CommandHandler('upcoming_earnings', upcoming_earnings, run_async=True))
+    dispatcher.add_handler(CommandHandler('uc', upcoming_earnings, run_async=True))
+    dispatcher.add_handler(CommandHandler('stonk_upcoming_earnings', stonk_upcoming_earnings, run_async=True))
+    dispatcher.add_handler(CommandHandler('sue', stonk_upcoming_earnings, run_async=True))
 
     # ...and the error handler
-    dispatcher.add_error_handler(error_handler, run_async=True)
+    dispatcher.add_error_handler(exception_handler, run_async=True)
 
     # Message handler
     dispatcher.add_handler(MessageHandler(Filters.status_update.new_chat_members |

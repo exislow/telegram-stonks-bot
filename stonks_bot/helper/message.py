@@ -41,7 +41,7 @@ def get_message(update: Update) -> Message:
     return msg
 
 
-def reply_command_unknown(update: Update, command: str):
+def reply_command_unknown(update: Update):
     reply = f'❌ This command does not exist.'
 
     reply_message(update, reply, parse_mode=ParseMode.MARKDOWN_V2)

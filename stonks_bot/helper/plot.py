@@ -82,6 +82,5 @@ def create_candle_chart(df_ohlc: pd.DataFrame, stock_name: str, symbol: str) -> 
     plt.close('all')
 
     buf.seek(0)
-    # buf.close()
 
     return buf

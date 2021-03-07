@@ -145,3 +145,12 @@ class Stonk(object):
             return True
         else:
             return False
+
+    def upcoming_earning(self):
+        t = yf.Ticker(self.symbol)
+        result = False
+
+        if t.calendar is not None:
+            result = t.calendar[0]['Earnings Date']
+
+        return result
