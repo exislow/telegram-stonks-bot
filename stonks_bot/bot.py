@@ -27,7 +27,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersist
 
 from stonks_bot import conf
 from stonks_bot.helper.args import check_arg_symbol
-from stonks_bot.helper.command import restricted_command, send_typing_action, bot_added_to_group
+from stonks_bot.helper.command import restricted_command, send_typing_action, bot_added_to_group, check_symbol_limit
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.math import round_currency_scalar
@@ -83,6 +83,7 @@ def help(update: Update, context: CallbackContext) -> None:
     reply_message(update, reply)
 
 
+@check_symbol_limit
 def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
     symbol = check_arg_symbol(update, context.args)
 
@@ -125,7 +126,7 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
     else:
         reply = f'⚠️ Symbol *{symbol}* is not in watchlist\.'
 
-    reply_message(update, update, reply, parse_mode=ParseMode.MARKDOWN_V2)
+    reply_message(update, reply, parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @restricted_command

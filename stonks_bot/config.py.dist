@@ -47,6 +47,20 @@ class Config(object):
         'stock': 'stonks'
     }
 
+    LIMITS = {
+        'default': {
+            'private': {
+                'symbols_max': 30
+            },
+            'group': {
+                'symbols_max': 60
+            },
+            'channel': {
+                'symbols_max': 60
+            }
+        }
+    }
+
 
 class DevelopmentConfig(Config):
     """Configurations for Development."""
