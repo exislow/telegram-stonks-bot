@@ -23,6 +23,5 @@ python bot.py
 - [ ] Comment the whole code.
 - [ ] Proper logging to file.
 - [ ] Optimize traffic usage: Keep symbols in bot_data and link them to chat_data
-- [ ] Only admin can add bot to groups
 - [ ] Watchlist: max. x symbols per user
 - [ ] Fix periodic up/down checker: Does not notifies chats.

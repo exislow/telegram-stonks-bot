@@ -27,7 +27,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersist
 
 from stonks_bot import conf
 from stonks_bot.helper.args import check_arg_symbol
-from stonks_bot.helper.command import restricted, send_typing_action
+from stonks_bot.helper.command import restricted_command, send_typing_action, bot_added_to_group
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.math import round_currency_scalar
@@ -128,7 +128,7 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
     reply_message(update, update, reply, parse_mode=ParseMode.MARKDOWN_V2)
 
 
-@restricted
+@restricted_command
 def stonk_clear(update: Update, context: CallbackContext) -> None:
     context.chat_data[conf.INTERNALS['stock']] = {}
     clear_daily_dict(context.chat_data)
@@ -241,9 +241,7 @@ def check_rise_fall_day(context: CallbackContext) -> None:
 
 def added_to_group(update: Update, context: CallbackContext):
     if context.bot.bot in update.message.new_chat_members or update.message.group_chat_created:
-        g = context.bot_data.get(conf.INTERNALS['groups'], {})
-        g[update.message.chat_id] = update.message.chat
-        context.bot_data[conf.INTERNALS['groups']] = g
+        bot_added_to_group(update, context)
 
 
 def removed_from_group(update: Update, context: CallbackContext):
@@ -274,7 +272,7 @@ def main():
     """Run bot."""
     persist = PicklePersistence(filename=f'{conf.PERSISTENCE_NAME}.pickle')
     # Create the Updater and pass it your bot's token.
-    updater = Updater(f"{conf.API['telegram_bot_token']}", persistence=persist, use_context=True, workers=conf.API['WORKERS'])
+    updater = Updater(f"{conf.API['telegram_bot_token']}", persistence=persist, use_context=True, workers=conf.WORKERS)
 
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
