@@ -274,36 +274,36 @@ def main():
     """Run bot."""
     persist = PicklePersistence(filename=f'{conf.PERSISTENCE_NAME}.pickle')
     # Create the Updater and pass it your bot's token.
-    updater = Updater(f"{conf.API['telegram_bot_id']}", persistence=persist, use_context=True)
+    updater = Updater(f"{conf.API['telegram_bot_token']}", persistence=persist, use_context=True, workers=conf.API['WORKERS'])
 
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
 
     # on different commands - answer in Telegram
-    dispatcher.add_handler(CommandHandler('help', help))
+    dispatcher.add_handler(CommandHandler('help', help, run_async=True))
     dispatcher.add_handler(CommandHandler('stonk_add', stonk_add))
     dispatcher.add_handler(CommandHandler('sa', stonk_add))
     dispatcher.add_handler(CommandHandler('stonk_del', stonk_del))
     dispatcher.add_handler(CommandHandler('sd', stonk_del))
     dispatcher.add_handler(CommandHandler('stonk_clear', stonk_clear))
     dispatcher.add_handler(CommandHandler('sc', stonk_clear))
-    dispatcher.add_handler(CommandHandler('stonk_list', stonk_list))
-    dispatcher.add_handler(CommandHandler('sl', stonk_list))
-    dispatcher.add_handler(CommandHandler('list_price', list_price))
-    dispatcher.add_handler(CommandHandler('lp', list_price))
-    dispatcher.add_handler(CommandHandler('chart', chart))
-    dispatcher.add_handler(CommandHandler('c', chart))
+    dispatcher.add_handler(CommandHandler('stonk_list', stonk_list, run_async=True))
+    dispatcher.add_handler(CommandHandler('sl', stonk_list, run_async=True))
+    dispatcher.add_handler(CommandHandler('list_price', list_price, run_async=True))
+    dispatcher.add_handler(CommandHandler('lp', list_price, run_async=True))
+    dispatcher.add_handler(CommandHandler('chart', chart, run_async=True))
+    dispatcher.add_handler(CommandHandler('c', chart, run_async=True))
 
     # ...and the error handler
-    dispatcher.add_error_handler(error_handler)
+    dispatcher.add_error_handler(error_handler, run_async=True)
 
     # Message handler
     dispatcher.add_handler(MessageHandler(Filters.status_update.new_chat_members |
-                                          Filters.status_update.chat_created, added_to_group))
-    dispatcher.add_handler(MessageHandler(Filters.status_update.left_chat_member, removed_from_group))
+                                          Filters.status_update.chat_created, added_to_group, run_async=True))
+    dispatcher.add_handler(MessageHandler(Filters.status_update.left_chat_member, removed_from_group, run_async=True))
 
     # Unknown command. this handler must be added last.
-    dispatcher.add_handler(MessageHandler(Filters.command, command_unknown))
+    dispatcher.add_handler(MessageHandler(Filters.command, command_unknown, run_async=True))
 
     # Job queue stuff
     job_queue = updater.job_queue

@@ -8,6 +8,7 @@ class Config(object):
     TESTING = False
 
     PERSISTENCE_NAME = 'stonks_store'
+    WORKERS = 32
 
     USER_ID = {
         'master': <ID>,
@@ -20,7 +21,7 @@ class Config(object):
     }
 
     API = {
-        'telegram_bot_id': 'TELEGRAM BOT KEY',
+        'telegram_bot_token': 'TELEGRAM BOT KEY',
         'finance_currency': 'USD'
     }
 
