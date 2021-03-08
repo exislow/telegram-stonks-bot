@@ -26,7 +26,7 @@ from stonks_bot import conf
 from stonks_bot.actions import bot_added_to_group
 from stonks_bot.discovery import Discovery
 from stonks_bot.helper.args import check_arg_symbol
-from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit
+from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.handler import error_handler
@@ -36,10 +36,8 @@ from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, repl
 from stonks_bot.stonk import Stonk
 
 
+@log_error(error_handler, 'Command does not exist.')
 def command_unknown(update: Update, context: CallbackContext) -> None:
-    error_message = 'Command does not exist.'
-    error_handler(update, context, error_message)
-
     reply_command_unknown(update)
 
 
