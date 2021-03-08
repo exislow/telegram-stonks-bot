@@ -1,13 +1,13 @@
+from datetime import date, timedelta
 from io import BytesIO
 
-import matplotlib.pyplot as plt
 import pandas as pd
-import requests
 from alpha_vantage.sectorperformance import SectorPerformances
-from bs4 import BeautifulSoup
+from dateutil import parser
+from yahoo_earnings_calendar import YahooEarningsCalendar
 
 from stonks_bot import conf
-from stonks_bot.helper.web import get_user_agent
+from stonks_bot.helper.plot import PlotContext
 
 PERFORMANCE_SECTORS_SP500_TIMESPAN = {
     'realtime': 'Rank A: Real-Time Performance',
@@ -31,68 +31,39 @@ class Discovery(object):
         {'url': 'https://unusualwhales.com/spacs', 'description': 'UnusualWhales SPAC Research'}
     ]
 
-    def __init(self):
-        pass
-
-    def performance_sectors_sp500(self, timespan: str = 'realtime'):
-        plt.close('all')
-        plt.style.use('dark_background')
-
-        buf = BytesIO()
-
+    def performance_sectors_sp500(self, timespan: str = 'realtime') -> BytesIO:
         sp = SectorPerformances(key=conf.API['alphavantage_api_key'], output_format='pandas')
         df_sectors, _ = sp.get_sector()
         timespan_desc = PERFORMANCE_SECTORS_SP500_TIMESPAN[timespan]
-        df_sectors[timespan_desc].plot(kind='bar')
-        plt.title(f'S&P500 Sectors: {timespan_desc[8:]}')
-        plt.ylabel('%')
-        plt.tight_layout()
-        plt.grid()
+        df_data = df_sectors[timespan_desc]
+        title = f'S&P500 Sectors: {timespan_desc[8:]}'
+        ylabel = '%'
 
-        plt.savefig(buf, bbox_inches='tight')
-        plt.cla()
-        plt.clf()
-        plt.close()
-        plt.close('all')
-
-        buf.seek(0)
+        with PlotContext() as pc:
+            buf = pc.create_bar_chart(df_data, title, ylabel)
 
         return buf
 
-    def upcoming_earnings(self):
-        pages = 3
-        days = 3
+    def upcoming_earnings(self, days: int = 2) -> str:
+        result = ''
+        date_from = date.today()
+        date_to = date_from + timedelta(days=days)
 
-        earnings = list()
-        for idx in range(0, pages):
-            if idx == 0:
-                url_next_earnings = ('https://seekingalpha.com/earnings/earnings-calendar')
-            else:
-                url_next_earnings = (f'https://seekingalpha.com/earnings/earnings-calendar/{idx + 1}')
-            text_soup_earnings = BeautifulSoup(
-                    requests.get(url_next_earnings, headers={'User-Agent': get_user_agent()}).text, 'lxml',
-            )
+        yec = YahooEarningsCalendar()
+        ue = yec.earnings_between(date_from, date_to)
+        pd_ue = pd.DataFrame(ue)
+        pd_ue = pd_ue.drop_duplicates(subset=['ticker'])
+        result = pd_ue[
+            ['startdatetime', 'companyshortname', 'ticker']
+        ].to_string(header=False, index=False, formatters={'startdatetime': self._formatter_date,
+                                                           'ticker': self._formatter_symbol})
 
-            for bs_stock in text_soup_earnings.findAll('tr', {'data-exchange': 'NASDAQ'}):
-                stock = list()
+        return result
 
-                for stock in bs_stock.contents[:3]:
-                    stock.append(stock.text)
+    def _formatter_date(self, datetime_str: str) -> str:
+        dt = parser.isoparse(datetime_str)
 
-                earnings.append(stock)
+        return dt.strftime('%m-%d')
 
-        df_earnings = pd.DataFrame(earnings, columns=['Ticker', 'Name', 'Date'])
-        df_earnings['Date'] = pd.to_datetime(df_earnings['Date'])
-        df_earnings = df_earnings.set_index('Date')
-
-        pd.set_option('display.max_colwidth', -1)
-
-        for n_days, earning_date in enumerate(df_earnings.index.unique()):
-            if n_days > (days - 1):
-                break
-
-            print(f'Earning Release on {earning_date.date()}')
-            print('----------------------------------------------')
-            print(
-                    df_earnings[earning_date == df_earnings.index][['Ticker', 'Name']].to_string(index=False, header=False)
-            )
+    def _formatter_symbol(self, symbol: str) -> str:
+        return f'({symbol})'

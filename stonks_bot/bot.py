@@ -14,10 +14,7 @@ Basic Alarm Bot example, sends a message after a set time.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
-import html
-import json
 import logging
-import traceback
 from collections import defaultdict
 from datetime import datetime
 from typing import Union
@@ -26,51 +23,23 @@ from telegram import Update, ParseMode, Message, Chat
 from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersistence, MessageHandler, Filters
 
 from stonks_bot import conf
+from stonks_bot.actions import bot_added_to_group
 from stonks_bot.discovery import Discovery
 from stonks_bot.helper.args import check_arg_symbol
 from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit
-from stonks_bot.actions import bot_added_to_group
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
+from stonks_bot.helper.handler import error_handler
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
     reply_command_unknown
 from stonks_bot.stonk import Stonk
 
-logging.basicConfig(
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
-
-logger = logging.getLogger(__name__)
-
-
-def exception_handler(update: Update, context: CallbackContext) -> None:
-    """Log the error and send a telegram message to notify the developer."""
-    # Log the error before we do anything else, so we can see it even if something breaks.
-    logger.error(msg='Exception while handling an update:', exc_info=context.error)
-
-    # traceback.format_exception returns the usual python message about an exception, but as a
-    # list of strings rather than a single string, so we have to join them together.
-    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
-    tb_string = ''.join(tb_list)
-
-    # Build the message with some markup and additional information about what happened.
-    # You might need to add some logic to deal with messages longer than the 4096 character limit.
-    update_dict = update.to_dict() if isinstance(update, Update) else None
-    message = (
-        f'An exception was raised while handling an update.\n'
-        f'<pre>update = {html.escape(json.dumps(update_dict, indent=2, ensure_ascii=False))}</pre>\n\n'
-        f'<pre>context.bot_data = {html.escape(str(context.bot_data))}</pre>\n\n'
-        f'<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n'
-        f'<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n'
-        f'<pre>{html.escape(tb_string)}</pre>'
-    )
-
-    # Finally, send the message
-    context.bot.send_message(chat_id=conf.USER_ID['master'], text=message, parse_mode=ParseMode.HTML)
-
 
 def command_unknown(update: Update, context: CallbackContext) -> None:
+    error_message = 'Command does not exist.'
+    error_handler(update, context, error_message)
+
     reply_command_unknown(update)
 
 
@@ -131,7 +100,7 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
     reply_message(update, reply, parse_mode=ParseMode.MARKDOWN_V2)
 
 
-@restricted_command
+@restricted_command(error_handler, 'Command execution forbidden (restricted access).')
 def stonk_clear(update: Update, context: CallbackContext) -> None:
     context.chat_data[conf.INTERNALS['stock']] = {}
     clear_daily_dict(context.chat_data)
@@ -193,7 +162,7 @@ def chart(update: Update, context: CallbackContext, reply=True) -> Union[None, b
     if reply:
         reply_with_photo(update, c_buf)
     else:
-        send_photo(update, context, c_buf)
+        send_photo(context, update.effective_message.chat_id, c_buf)
 
 
 def check_rise_fall_day(context: CallbackContext) -> None:
@@ -287,13 +256,15 @@ def sector_performance(update: Update, context: CallbackContext):
     d = Discovery()
     c_buf = d.performance_sectors_sp500()
 
-    send_photo(update, context, c_buf)
+    reply_with_photo(update, context, c_buf)
 
 
 @send_typing_action
 def upcoming_earnings(update: Update, context: CallbackContext):
     d = Discovery()
-    uc = d.upcoming_earnings()
+    ue = d.upcoming_earnings()
+
+    reply_message(update, ue, parse_mode=ParseMode.HTML, pre=True)
 
 
 @send_typing_action
@@ -351,12 +322,12 @@ def main():
     dispatcher.add_handler(CommandHandler('sector_performance', sector_performance, run_async=True))
     dispatcher.add_handler(CommandHandler('sp', sector_performance, run_async=True))
     dispatcher.add_handler(CommandHandler('upcoming_earnings', upcoming_earnings, run_async=True))
-    dispatcher.add_handler(CommandHandler('uc', upcoming_earnings, run_async=True))
+    dispatcher.add_handler(CommandHandler('ue', upcoming_earnings, run_async=True))
     dispatcher.add_handler(CommandHandler('stonk_upcoming_earnings', stonk_upcoming_earnings, run_async=True))
     dispatcher.add_handler(CommandHandler('sue', stonk_upcoming_earnings, run_async=True))
 
     # ...and the error handler
-    dispatcher.add_error_handler(exception_handler, run_async=True)
+    dispatcher.add_error_handler(error_handler, run_async=True)
 
     # Message handler
     dispatcher.add_handler(MessageHandler(Filters.status_update.new_chat_members |

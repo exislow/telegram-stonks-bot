@@ -9,6 +9,7 @@ class Config(object):
 
     PERSISTENCE_NAME = 'stonks_store'
     WORKERS = 32
+    MAX_LEN_MSG = 4096
 
     USER_ID = {
         'master': <ID>,

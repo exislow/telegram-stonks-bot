@@ -11,7 +11,7 @@ from stonks_bot.dataclasses.performance import Performance
 from stonks_bot.dataclasses.price_daily import PriceDaily
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.math import round_currency_scalar
-from stonks_bot.helper.plot import create_candle_chart
+from stonks_bot.helper.plot import PlotContext
 
 
 class Stonk(object):
@@ -104,7 +104,8 @@ class Stonk(object):
 
     def chart(self) -> BytesIO:
         yf_df = self._get_financials_adjusted('1d', '15m')
-        chart_buf = create_candle_chart(yf_df, self.name, self.symbol)
+        with PlotContext() as pc:
+            chart_buf = pc.create_candle_chart(yf_df, self.name, self.symbol)
 
         return chart_buf
 
