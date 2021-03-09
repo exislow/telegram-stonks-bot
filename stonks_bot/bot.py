@@ -371,7 +371,29 @@ def hot_penny(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.hot_pennystocks(count)
-    text = f'💰 💰 💰\n\n{text}'
+    text = f'🔥 👼 💰\n\n{text}'
+
+    reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
+
+
+@send_typing_action
+def underval_large(update: Update, context: CallbackContext):
+    count = parse_daily_perf_count(update, context.args)
+
+    d = Discovery()
+    text = d.undervalued_large_caps(count)
+    text = f'👼 🐖 🐖\n\n{text}'
+
+    reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
+
+
+@send_typing_action
+def underval_growth(update: Update, context: CallbackContext):
+    count = parse_daily_perf_count(update, context.args)
+
+    d = Discovery()
+    text = d.undervalued_growth(count)
+    text = f'👼 🕺 🕺\n\n{text}'
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -420,6 +442,10 @@ def main():
     dispatcher.add_handler(CommandHandler('lf', low_float, run_async=True))
     dispatcher.add_handler(CommandHandler('hot_penny', hot_penny, run_async=True))
     dispatcher.add_handler(CommandHandler('hp', hot_penny, run_async=True))
+    dispatcher.add_handler(CommandHandler('underval_large', underval_large, run_async=True))
+    dispatcher.add_handler(CommandHandler('ul', underval_large, run_async=True))
+    dispatcher.add_handler(CommandHandler('underval_growth', underval_growth, run_async=True))
+    dispatcher.add_handler(CommandHandler('ug', underval_growth, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)

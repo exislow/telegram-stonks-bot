@@ -75,6 +75,18 @@ class Discovery(object):
 
         return result
 
+    def undervalued_large_caps(self, count: int = 15) -> str:
+        url = f'https://ca.finance.yahoo.com/screener/predefined/undervalued_large_caps?offset=0&count={count}'
+        result = self.get_daily_performers(url)
+
+        return result
+
+    def undervalued_growth(self, count: int = 15) -> str:
+        url = f'https://ca.finance.yahoo.com/screener/predefined/undervalued_growth_stocks?offset=0&count={count}'
+        result = self.get_daily_performers(url)
+
+        return result
+
     def get_daily_performers(self, yf_url: str) -> str:
         df_perf = pd.read_html(yf_url)[0]
         result = df_perf[
@@ -109,7 +121,7 @@ class Discovery(object):
 
         return result
 
-    def get_short_float(self, url: str, count: int = 15):
+    def get_short_float(self, url: str, count: int = 15) -> str:
         df = self.get_short_float_penny(url)
         columns = ['Company', 'Ticker', 'ShortInt', 'Float', 'Outstd']
         result = df[columns].head(n=count).to_string(header=['Company', 'Sym.', 'SI %', 'Float', 'Outstd'],
