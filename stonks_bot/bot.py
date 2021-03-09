@@ -43,6 +43,10 @@ def command_unknown(update: Update, context: CallbackContext) -> None:
     reply_command_unknown(update)
 
 
+def start(update: Update, context: CallbackContext) -> None:
+    help(update, context)
+
+
 def help(update: Update, context: CallbackContext) -> None:
     reply = """Hi, I am the STONKS BOT! Try to use the following commands:
 * /stonk_add <SYMBOL/ISIN> (/sa) -> Add a stock to the watchlist.
@@ -335,6 +339,7 @@ def main():
     dispatcher = updater.dispatcher
 
     # on different commands - answer in Telegram
+    dispatcher.add_handler(CommandHandler('start', start, run_async=True))
     dispatcher.add_handler(CommandHandler('help', help, run_async=True))
     dispatcher.add_handler(CommandHandler('stonk_add', stonk_add))
     dispatcher.add_handler(CommandHandler('sa', stonk_add))
