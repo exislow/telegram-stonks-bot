@@ -47,10 +47,33 @@ def send_message(context: CallbackContext, chat_id: int, text: str, parse_mode: 
 
 
 def reply_command_unknown(update: Update):
-    reply = f'❌ This command does not exist.'
+    reply = '❌ This command does not exist.'
+    search = 'what'
 
-    reply_message(update, reply)
-    reply_random_gif(update, 'what')
+    reply_error_message_gif(update, reply, search)
+
+
+def reply_error_message_gif(update: Update, message: str, search_term: str):
+    reply_message(update, message)
+    reply_random_gif(update, search_term)
+
+
+def reply_gif_fail_message(update: Update, message: str):
+    search = 'fail'
+
+    reply_error_message_gif(update, message, search)
+
+
+def reply_gif_wrong_arg_help(update: Update):
+    message = '❌ Wrong argument. Read /help again.'
+
+    reply_gif_fail_message(update, message)
+
+
+def reply_gif_symbol_missing(update: Update):
+    message = f'Provide a SYMBOL you 🧻🤲🐩.'
+
+    reply_gif_fail_message(update, message)
 
 
 def split_long_message(text: str, result: Union[None, List[str]] = None) -> List[str]:
@@ -71,6 +94,6 @@ def split_long_message(text: str, result: Union[None, List[str]] = None) -> List
             split_pos = conf.MAX_LEN_MSG
 
         result.append(text[:split_pos])
-        result.append(split_long_message(text[split_pos:], result))
+        result = split_long_message(text[split_pos:], result)
 
         return result

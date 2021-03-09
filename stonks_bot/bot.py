@@ -14,7 +14,6 @@ Basic Alarm Bot example, sends a message after a set time.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
-import logging
 from collections import defaultdict
 from datetime import datetime
 from typing import Union
@@ -25,7 +24,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersist
 from stonks_bot import conf
 from stonks_bot.actions import bot_added_to_group
 from stonks_bot.discovery import Discovery
-from stonks_bot.helper.args import check_arg_symbol
+from stonks_bot.helper.args import parse_symbol, parse_daily_perf_count
 from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
@@ -54,7 +53,7 @@ def help(update: Update, context: CallbackContext) -> None:
 
 @check_symbol_limit
 def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
-    symbol = check_arg_symbol(update, context.args)
+    symbol = parse_symbol(update, context.args)
 
     if not symbol:
         return False
@@ -77,7 +76,7 @@ def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
 
 
 def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
-    symbol = check_arg_symbol(update, context.args)
+    symbol = parse_symbol(update, context.args)
 
     if not symbol:
         return False
@@ -143,7 +142,7 @@ def list_price(update: Update, context: CallbackContext) -> None:
 
 @send_typing_action
 def chart(update: Update, context: CallbackContext, reply=True) -> Union[None, bool]:
-    symbol = check_arg_symbol(update, context.args)
+    symbol = parse_symbol(update, context.args)
 
     if not symbol:
         return False
@@ -267,7 +266,7 @@ def upcoming_earnings(update: Update, context: CallbackContext):
 
 @send_typing_action
 def stonk_upcoming_earnings(update: Update, context: CallbackContext):
-    # TODO: Optimize this to load all smybol events in one go instead of per symbol.
+    # TODO: Optimize this to load all symbols for event lookup in one go instead of per symbol.
     stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
 
     if len(stonks) > 0:
@@ -290,6 +289,26 @@ def stonk_upcoming_earnings(update: Update, context: CallbackContext):
         reply = '🧻🤲 Watch list is empty.'
 
     reply_message(update, reply, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def gainers(update: Update, context: CallbackContext):
+    count = parse_daily_perf_count(update, context.args)
+
+    d = Discovery()
+    g = d.gainers(count)
+
+    reply_message(update, g, parse_mode=ParseMode.HTML, pre=True)
+
+
+@send_typing_action
+def losers(update: Update, context: CallbackContext):
+    count = parse_daily_perf_count(update, context.args)
+
+    d = Discovery()
+    g = d.losers(count)
+
+    reply_message(update, g, parse_mode=ParseMode.HTML, pre=True)
 
 
 def main():
@@ -323,6 +342,10 @@ def main():
     dispatcher.add_handler(CommandHandler('ue', upcoming_earnings, run_async=True))
     dispatcher.add_handler(CommandHandler('stonk_upcoming_earnings', stonk_upcoming_earnings, run_async=True))
     dispatcher.add_handler(CommandHandler('sue', stonk_upcoming_earnings, run_async=True))
+    dispatcher.add_handler(CommandHandler('gainers', gainers, run_async=True))
+    dispatcher.add_handler(CommandHandler('g', gainers, run_async=True))
+    dispatcher.add_handler(CommandHandler('losers', losers, run_async=True))
+    dispatcher.add_handler(CommandHandler('l', losers, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)

@@ -56,7 +56,30 @@ class Discovery(object):
         result = pd_ue[
             ['startdatetime', 'companyshortname', 'ticker']
         ].to_string(header=False, index=False, formatters={'startdatetime': self._formatter_date,
-                                                           'ticker': self._formatter_symbol})
+                                                           'companyshortname': '{:.15}'.format})
+
+        return result
+
+    def gainers(self, count: int = 15):
+        url = f'https://finance.yahoo.com/gainers?offset=0&count={count}'
+        result = self.get_daily_performers(url)
+
+        return result
+
+    def losers(self, count: int = 15):
+        url = f'https://finance.yahoo.com/losers?offset=0&count={count}'
+        result = self.get_daily_performers(url)
+
+        return result
+
+    def get_daily_performers(self, yf_url: str):
+        df_gainers = pd.read_html(yf_url)[0]
+        result = df_gainers[
+            ['Name', 'Symbol', 'Price (Intraday)', 'Change', '% Change']
+        ].to_string(header=['Company', 'Sym', 'Price', '+-', '%'],
+                    index=False, formatters={'startdatetime': self._formatter_date,
+                                             'Name': '{:.10}'.format,
+                                             '% Change': self._formatter_shorten_1})
 
         return result
 
@@ -65,5 +88,5 @@ class Discovery(object):
 
         return dt.strftime('%m-%d')
 
-    def _formatter_symbol(self, symbol: str) -> str:
-        return f'({symbol})'
+    def _formatter_shorten_1(self, text):
+        return text[:-1]
