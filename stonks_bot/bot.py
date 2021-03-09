@@ -14,6 +14,8 @@ Basic Alarm Bot example, sends a message after a set time.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
+import pandas as pd
+
 from collections import defaultdict
 from datetime import datetime
 from typing import Union
@@ -28,6 +30,7 @@ from stonks_bot.helper.args import parse_symbol, parse_daily_perf_count
 from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
+from stonks_bot.helper.formatters import formatter_digits
 from stonks_bot.helper.handler import error_handler
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
@@ -124,20 +127,28 @@ def stonk_list(update: Update, context: CallbackContext) -> None:
 @send_typing_action
 def list_price(update: Update, context: CallbackContext) -> None:
     stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
+    columns = ['Sym.', '⬆️ H', '⬇️️ L', '🛬 C', f"±{conf.LOCAL['currency']}", '±%']
+    data = []
 
     if len(stonks) > 0:
-        reply = f"📊SYMBOL: ⬆️HIGH ⬇️️LOW 🛬CLOSE = DIFF. ({conf.LOCAL['currency']})\n"
-
         for k, s in sorted(stonks.items()):
-            pd = s.price_daily()
-            diff_txt = f'🚀+{pd.percent}% ({pd.diff})' if pd.diff > 0 else f'📉{pd.percent}% ({pd.diff})'
-            reply += f"📊{s.symbol}: ⬆️{pd.high} ⬇️️{pd.low} 🛬{pd.close} = {diff_txt}\n"
+            dp = s.price_daily()
 
-        reply = f'<pre>{reply[0:-1]}</pre>'
+            data.append([s.symbol, dp.high, dp.low, dp.close, dp.diff, dp.percent])
+
+        df = pd.DataFrame(data, columns=columns)
+        reply = df.to_string(index=False, formatters={
+            columns[1]: formatter_digits,
+            columns[2]: formatter_digits,
+            columns[3]: formatter_digits,
+            columns[4]: formatter_digits,
+            columns[5]: formatter_digits
+        })
+        reply = f'🚀 🚀 🚀 📉 📉 📉\n\n{reply}'
     else:
         reply = '🧻🤲 Watch list is empty.'
 
-    reply_message(update, reply, parse_mode=ParseMode.HTML)
+    reply_message(update, reply, parse_mode=ParseMode.HTML, pre=True)
 
 
 @send_typing_action
@@ -268,10 +279,11 @@ def upcoming_earnings(update: Update, context: CallbackContext):
 def stonk_upcoming_earnings(update: Update, context: CallbackContext):
     # TODO: Optimize this to load all symbols for event lookup in one go instead of per symbol.
     stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
+    columns = ['Company', 'Sym.', 'Date', '-days']
+    data = []
 
     if len(stonks) > 0:
         now = datetime.now()
-        reply = ''
 
         for k, s in sorted(stonks.items()):
             ue = s.upcoming_earning()
@@ -282,13 +294,15 @@ def stonk_upcoming_earnings(update: Update, context: CallbackContext):
                 date = ue.strftime('%Y-%m-%d')
                 days_left = (ue - now).days
 
-            reply += f'📅 {s.name} ({s.symbol}) -> {date} ({days_left} days)\n'
+            data.append([s.name, s.symbol, date, days_left])
 
-        reply = reply[0:-1]
+        df = pd.DataFrame(data, columns=columns)
+        reply = df.to_string(index=False, formatters={'Company': '{:.10}'.format})
+        reply = f'📅 📅 📅\n\n{reply}'
     else:
         reply = '🧻🤲 Watch list is empty.'
 
-    reply_message(update, reply, parse_mode=ParseMode.HTML)
+    reply_message(update, reply, parse_mode=ParseMode.HTML, pre=True)
 
 
 @send_typing_action

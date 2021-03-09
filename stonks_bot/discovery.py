@@ -3,10 +3,10 @@ from io import BytesIO
 
 import pandas as pd
 from alpha_vantage.sectorperformance import SectorPerformances
-from dateutil import parser
 from yahoo_earnings_calendar import YahooEarningsCalendar
 
 from stonks_bot import conf
+from stonks_bot.helper.formatters import formatter_date, formatter_shorten_1
 from stonks_bot.helper.plot import PlotContext
 
 PERFORMANCE_SECTORS_SP500_TIMESPAN = {
@@ -55,7 +55,7 @@ class Discovery(object):
         pd_ue = pd_ue.drop_duplicates(subset=['ticker'])
         result = pd_ue[
             ['startdatetime', 'companyshortname', 'ticker']
-        ].to_string(header=False, index=False, formatters={'startdatetime': self._formatter_date,
+        ].to_string(header=False, index=False, formatters={'startdatetime': formatter_date,
                                                            'companyshortname': '{:.15}'.format})
 
         return result
@@ -77,16 +77,8 @@ class Discovery(object):
         result = df_gainers[
             ['Name', 'Symbol', 'Price (Intraday)', 'Change', '% Change']
         ].to_string(header=['Company', 'Sym', 'Price', '+-', '%'],
-                    index=False, formatters={'startdatetime': self._formatter_date,
+                    index=False, formatters={'startdatetime': formatter_date,
                                              'Name': '{:.10}'.format,
-                                             '% Change': self._formatter_shorten_1})
+                                             '% Change': formatter_shorten_1})
 
         return result
-
-    def _formatter_date(self, datetime_str: str) -> str:
-        dt = parser.isoparse(datetime_str)
-
-        return dt.strftime('%m-%d')
-
-    def _formatter_shorten_1(self, text):
-        return text[:-1]
