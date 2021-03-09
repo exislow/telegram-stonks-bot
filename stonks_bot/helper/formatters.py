@@ -15,3 +15,7 @@ def formatter_date(datetime_str: str) -> str:
 
 def formatter_shorten_1(text):
     return text[:-1]
+
+
+def formatter_offset_1(text):
+    return text[1:]

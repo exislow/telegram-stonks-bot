@@ -343,6 +343,39 @@ def orders(update: Update, context: CallbackContext):
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
 
+@send_typing_action
+def high_short(update: Update, context: CallbackContext):
+    count = parse_daily_perf_count(update, context.args)
+
+    d = Discovery()
+    text = d.high_short(count)
+    text = f'🩳 🩳 🩳\n\n{text}'
+
+    reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
+
+
+@send_typing_action
+def low_float(update: Update, context: CallbackContext):
+    count = parse_daily_perf_count(update, context.args)
+
+    d = Discovery()
+    text = d.low_float(count)
+    text = f'🤲 🤲 🤲\n\n{text}'
+
+    reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
+
+
+@send_typing_action
+def hot_penny(update: Update, context: CallbackContext):
+    count = parse_daily_perf_count(update, context.args)
+
+    d = Discovery()
+    text = d.hot_pennystocks(count)
+    text = f'💰 💰 💰\n\n{text}'
+
+    reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
+
+
 def main():
     """Run bot."""
     persist = PicklePersistence(filename=f'{conf.PERSISTENCE_NAME}.pickle')
@@ -381,6 +414,12 @@ def main():
     dispatcher.add_handler(CommandHandler('l', losers, run_async=True))
     dispatcher.add_handler(CommandHandler('orders', orders, run_async=True))
     dispatcher.add_handler(CommandHandler('o', orders, run_async=True))
+    dispatcher.add_handler(CommandHandler('high_short', high_short, run_async=True))
+    dispatcher.add_handler(CommandHandler('hs', high_short, run_async=True))
+    dispatcher.add_handler(CommandHandler('low_float', low_float, run_async=True))
+    dispatcher.add_handler(CommandHandler('lf', low_float, run_async=True))
+    dispatcher.add_handler(CommandHandler('hot_penny', hot_penny, run_async=True))
+    dispatcher.add_handler(CommandHandler('hp', hot_penny, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)
