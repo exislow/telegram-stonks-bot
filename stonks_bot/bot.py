@@ -274,9 +274,10 @@ def sector_performance(update: Update, context: CallbackContext):
 @send_typing_action
 def upcoming_earnings(update: Update, context: CallbackContext):
     d = Discovery()
-    ue = d.upcoming_earnings()
+    text = d.upcoming_earnings()
+    text = f'🗓️ 🗓️ 🗓️\n\n{text}'
 
-    reply_message(update, ue, parse_mode=ParseMode.HTML, pre=True)
+    reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
 
 @send_typing_action
@@ -314,9 +315,10 @@ def gainers(update: Update, context: CallbackContext):
     count = parse_daily_perf_count(update, context.args)
 
     d = Discovery()
-    g = d.gainers(count)
+    text = d.gainers(count)
+    text = f'🚀 🚀 🚀\n\n{text}'
 
-    reply_message(update, g, parse_mode=ParseMode.HTML, pre=True)
+    reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
 
 @send_typing_action
@@ -324,9 +326,21 @@ def losers(update: Update, context: CallbackContext):
     count = parse_daily_perf_count(update, context.args)
 
     d = Discovery()
-    g = d.losers(count)
+    text = d.losers(count)
+    text = f'📉 📉 📉\n\n{text}'
 
-    reply_message(update, g, parse_mode=ParseMode.HTML, pre=True)
+    reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
+
+
+@send_typing_action
+def orders(update: Update, context: CallbackContext):
+    count = parse_daily_perf_count(update, context.args)
+
+    d = Discovery()
+    text = d.orders(count)
+    text = f'📖 📖 📖\n\n{text}'
+
+    reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
 
 def main():
@@ -365,6 +379,8 @@ def main():
     dispatcher.add_handler(CommandHandler('g', gainers, run_async=True))
     dispatcher.add_handler(CommandHandler('losers', losers, run_async=True))
     dispatcher.add_handler(CommandHandler('l', losers, run_async=True))
+    dispatcher.add_handler(CommandHandler('orders', orders, run_async=True))
+    dispatcher.add_handler(CommandHandler('o', orders, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)

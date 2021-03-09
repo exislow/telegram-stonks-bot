@@ -2,12 +2,15 @@ from datetime import date, timedelta
 from io import BytesIO
 
 import pandas as pd
+import requests
 from alpha_vantage.sectorperformance import SectorPerformances
+from bs4 import BeautifulSoup
 from yahoo_earnings_calendar import YahooEarningsCalendar
 
 from stonks_bot import conf
 from stonks_bot.helper.formatters import formatter_date, formatter_shorten_1
 from stonks_bot.helper.plot import PlotContext
+from stonks_bot.helper.web import get_user_agent
 
 PERFORMANCE_SECTORS_SP500_TIMESPAN = {
     'realtime': 'Rank A: Real-Time Performance',
@@ -73,12 +76,21 @@ class Discovery(object):
         return result
 
     def get_daily_performers(self, yf_url: str):
-        df_gainers = pd.read_html(yf_url)[0]
-        result = df_gainers[
+        df_perf = pd.read_html(yf_url)[0]
+        result = df_perf[
             ['Name', 'Symbol', 'Price (Intraday)', 'Change', '% Change']
         ].to_string(header=['Company', 'Sym', 'Price', '+-', '%'],
-                    index=False, formatters={'startdatetime': formatter_date,
-                                             'Name': '{:.10}'.format,
+                    index=False, formatters={'Name': '{:.10}'.format,
                                              '% Change': formatter_shorten_1})
+
+        return result
+
+    def orders(self, count: int = 15):
+        url = f'https://finance.yahoo.com/most-active?offset=0&count={count}'
+        df_orders = pd.read_html(url)[0]
+        result = df_orders[
+            ['Name', 'Symbol', 'Volume']
+        ].to_string(header=['Company', 'Sym', 'Volume'],
+                    index=False, formatters={'Name': '{:.15}'.format})
 
         return result
