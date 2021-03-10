@@ -24,7 +24,15 @@ class Config(object):
 
     API = {
         'telegram_bot_token': '<TELEGRAM BOT TOKEN>',
-        'finance_currency': 'USD'
+        'finance_currency': 'USD',
+        'alphavantage_api_key': '<ALPHAVANTAGE API KEY>',
+        'reddit': {
+            'client_id': '<CLIENT ID>',
+            'client_secret': '<CLIENT SECRET>',
+            'username': '<USERNAME>',
+            'user_agent': '<ANY USER AGENT STRING>',
+            'password': '<USER PASSWORD>'
+        }
     }
 
     OHLC = {
