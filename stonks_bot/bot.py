@@ -49,11 +49,24 @@ def start(update: Update, context: CallbackContext) -> None:
 
 def help(update: Update, context: CallbackContext) -> None:
     reply = """Hi, I am the STONKS BOT! Try to use the following commands:
-* /stonk_add <SYMBOL/ISIN> (/sa) -> Add a stock to the watchlist.
-* /stonk_del <SYMBOL/ISIN> (/sd) -> Delete a stock from the watchlist.
-* /stonk_list (/sl) -> Show the Watchlist
-* /list_price (/lp) -> List watchlist prices.
-* /chart <SYMBOL> (/c) -> Plot the last trading day of a stock."""
+* /stonk_add <SYMBOL/ISIN> | /sa -> Add a stock to the watchlist.
+* /stonk_del <SYMBOL/ISIN> | /sd -> Delete a stock from the watchlist.
+* /stonk_list | /sl -> Show the Watchlist
+* /list_price | /lp -> List watchlist prices.
+* /chart <SYMBOL> | /c -> Plot the last trading day of a stock.
+* /discovery | /d -> Useful infos to find hot stocks.
+* /sector_performance | /sp -> Show sector daily performance.
+* /upcoming_earnings | /ue -> Show upcoming earning dates.
+* /stonk_upcoming_earnings | /sue -> Show upcoming earning dates for watched stonks.
+* /gainers (<count>) | /g -> Show daily gainers.
+* /losers (<count>) | /l -> Show daily losers.
+* /orders (<count>) | /o -> Show daily high volume stonks.
+* /high_short (<count>) | /hs -> Show stonks with high short interest.
+* /low_float (<count>) | /lf -> Show stonks with low float.
+* /hot_penny (<count>) | /hp -> Show hot penny stonks.
+* /underval_large (<count>) | /ul -> Show undervalued large cap stonks.
+* /underval_growth (<count>) | /ug -> Show undervalued growth stonks.
+"""
 
     reply_message(update, reply)
 
@@ -410,6 +423,7 @@ def main():
     # on different commands - answer in Telegram
     dispatcher.add_handler(CommandHandler('start', start, run_async=True))
     dispatcher.add_handler(CommandHandler('help', help, run_async=True))
+    dispatcher.add_handler(CommandHandler('h', help, run_async=True))
     dispatcher.add_handler(CommandHandler('stonk_add', stonk_add))
     dispatcher.add_handler(CommandHandler('sa', stonk_add))
     dispatcher.add_handler(CommandHandler('stonk_del', stonk_del))
