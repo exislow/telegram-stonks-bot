@@ -24,3 +24,4 @@ python bot.py
 - [ ] Proper logging to file.
 - [ ] Optimize traffic usage: Keep symbols in bot_data and link them to chat_data list)
 - [ ] Fix periodic up/down checker: Does not notify chats.
+- [ ] Add source links to all data messages.

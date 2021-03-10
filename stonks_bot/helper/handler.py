@@ -38,12 +38,15 @@ def error_handler(update: Update, context: CallbackContext, error_message: Union
     # Build the message with some markup and additional information about what happened.
     # You might need to add some logic to deal with messages longer than the 4096 character limit.
     update_dict = update.to_dict() if isinstance(update, Update) else None
+    bot_data = context.job.context.dispatcher.bot_data if context.job else context.bot_data
+    chat_data = context.job.context.dispatcher.chat_data if context.job else context.chat_data
+    user_data = context.job.context.dispatcher.user_data if context.job else context.user_data
     message = (
         f'An {error_type} was raised while handling an update.\n\n'
         f'update = {html.escape(json.dumps(update_dict, indent=2, ensure_ascii=False))}\n\n'
-        f'context.bot_data = {html.escape(str(context.bot_data))}\n\n'
-        f'context.chat_data = {html.escape(str(context.chat_data))}\n\n'
-        f'context.user_data = {html.escape(str(context.user_data))}\n\n'
+        f'context.bot_data = {html.escape(str(bot_data))}\n\n'
+        f'context.chat_data = {html.escape(str(chat_data))}\n\n'
+        f'context.user_data = {html.escape(str(user_data))}\n\n'
         f'{additional_info}'
     )
 

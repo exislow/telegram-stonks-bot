@@ -33,7 +33,7 @@ from stonks_bot.helper.formatters import formatter_digits
 from stonks_bot.helper.handler import error_handler
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
-    reply_command_unknown, send_message
+    reply_command_unknown, send_message, reply_random_gif
 from stonks_bot.stonk import Stonk
 
 
@@ -86,10 +86,18 @@ def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
 
         return False
 
-    reply = f"✅ {s.name} ({s.symbol}; ISIN: {s.isin}) added to watchlist."
     stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
-    stonks[s.symbol] = s
-    context.chat_data[conf.INTERNALS['stock']] = stonks
+
+    if s.symbol not in stonks:
+        stonks[s.symbol] = s
+        context.chat_data[conf.INTERNALS['stock']] = stonks
+
+        reply = f"✅ {s.name} ({s.symbol}; ISIN: {s.isin}) added to watchlist."
+    else:
+        stonk_list(update, context)
+        reply_random_gif(update, 'boring')
+
+        reply = f"⚠️ {s.name} ({s.symbol}; ISIN: {s.isin}) is already in the watchlist."
 
     reply_message(update, reply)
 
@@ -223,9 +231,6 @@ def check_rise_fall_day(context: CallbackContext) -> None:
                         text = f"🚀🚀🚀 {stonk.name} ({stonk.symbol}) is rocketing to " \
                                f"{round_currency_scalar(stonk.daily_rise.price)} " \
                                f"{conf.LOCAL['currency']} (+{stonk.daily_rise.percent.round(2)}%)"
-                        send_message(context, c_id, text)
-                        chart(update_custom, context, reply=False)
-
                         to_send_message.append(text)
                         daily_rise[symbol] = datetime_now
 
@@ -234,9 +239,6 @@ def check_rise_fall_day(context: CallbackContext) -> None:
                         text = f"📉📉📉 {stonk.name} ({stonk.symbol}) is drow" \
                                f"ning to {round_currency_scalar(stonk.daily_fall.price)} " \
                                f"{conf.LOCAL['currency']} ({stonk.daily_fall.percent.round(2)}%)"
-                        send_message(context, c_id, text)
-                        chart(update_custom, context, reply=False)
-
                         to_send_message.append(text)
                         daily_fall[symbol] = datetime_now
 
@@ -245,6 +247,9 @@ def check_rise_fall_day(context: CallbackContext) -> None:
                         send_message(context, c_id, message)
                         chart(update_custom, context, reply=False, symbol=stonk.symbol)
                     except error.Unauthorize:
+                        error_message = f'Rise/Fall check: User ID {c_id} blocked our bot. Thus, this user was will be removed from chat_data.'
+                        error_handler(update_custom, context, error_message)
+
                         del context.job.context.dispatcher.chat_data[c_id]
 
                         break
@@ -294,7 +299,7 @@ def sector_performance(update: Update, context: CallbackContext):
     d = Discovery()
     c_buf = d.performance_sectors_sp500()
 
-    reply_with_photo(update, context, c_buf)
+    reply_with_photo(update, c_buf)
 
 
 @send_typing_action
