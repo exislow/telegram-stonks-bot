@@ -14,13 +14,12 @@ Basic Alarm Bot example, sends a message after a set time.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
-import pandas as pd
-
 from collections import defaultdict
 from datetime import datetime
 from typing import Union
 
-from telegram import Update, ParseMode, Message, Chat
+import pandas as pd
+from telegram import Update, ParseMode, Message, Chat, error
 from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersistence, MessageHandler, Filters
 
 from stonks_bot import conf
@@ -34,7 +33,7 @@ from stonks_bot.helper.formatters import formatter_digits
 from stonks_bot.helper.handler import error_handler
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
-    reply_command_unknown
+    reply_command_unknown, send_message
 from stonks_bot.stonk import Stonk
 
 
@@ -169,8 +168,10 @@ def list_price(update: Update, context: CallbackContext) -> None:
 
 
 @send_typing_action
-def chart(update: Update, context: CallbackContext, reply=True) -> Union[None, bool]:
-    symbol = parse_symbol(update, context.args)
+def chart(update: Update, context: CallbackContext, reply: bool = True, symbol: Union[bool, str] = False) -> Union[
+    None, bool]:
+    if not symbol:
+        symbol = parse_symbol(update, context.args)
 
     if not symbol:
         return False
@@ -214,27 +215,39 @@ def check_rise_fall_day(context: CallbackContext) -> None:
                 continue
 
             res_calc = stonk.calculate_perf_rise_fall_daily()
+            to_send_message = []
 
             if res_calc:
                 if stonk.daily_rise.calculated_at.date() == date_now and msg_last_rise_at < date_now:
                     if stonk.daily_rise.percent >= conf.JOBS['check_rise_fall_day']['threshold_perc_rise']:
-                        reply = f"🚀🚀🚀 {stonk.name} ({stonk.symbol}) is rocketing to " \
-                                f"{round_currency_scalar(stonk.daily_rise.price)} " \
-                                f"{conf.LOCAL['currency']} (+{stonk.daily_rise.percent.round(2)}%)"
-                        context.bot.send_message(c_id, text=reply)
+                        text = f"🚀🚀🚀 {stonk.name} ({stonk.symbol}) is rocketing to " \
+                               f"{round_currency_scalar(stonk.daily_rise.price)} " \
+                               f"{conf.LOCAL['currency']} (+{stonk.daily_rise.percent.round(2)}%)"
+                        send_message(context, c_id, text)
                         chart(update_custom, context, reply=False)
 
+                        to_send_message.append(text)
                         daily_rise[symbol] = datetime_now
 
                 if stonk.daily_fall.calculated_at.date() == date_now and msg_last_fall_at < date_now:
                     if stonk.daily_fall.percent <= conf.JOBS['check_rise_fall_day']['threshold_perc_fall']:
-                        reply = f"📉📉📉 {stonk.name} ({stonk.symbol}) is drow" \
-                                f"ning to {round_currency_scalar(stonk.daily_fall.price)} " \
-                                f"{conf.LOCAL['currency']} ({stonk.daily_fall.percent.round(2)}%)"
-                        context.bot.send_message(c_id, text=reply)
+                        text = f"📉📉📉 {stonk.name} ({stonk.symbol}) is drow" \
+                               f"ning to {round_currency_scalar(stonk.daily_fall.price)} " \
+                               f"{conf.LOCAL['currency']} ({stonk.daily_fall.percent.round(2)}%)"
+                        send_message(context, c_id, text)
                         chart(update_custom, context, reply=False)
 
+                        to_send_message.append(text)
                         daily_fall[symbol] = datetime_now
+
+                for message in to_send_message:
+                    try:
+                        send_message(context, c_id, message)
+                        chart(update_custom, context, reply=False, symbol=stonk.symbol)
+                    except error.Unauthorize:
+                        context.job.context.dispatcher.chat_data.pop(c_id)
+
+                        break
 
 
 def added_to_group(update: Update, context: CallbackContext):
