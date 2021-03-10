@@ -246,7 +246,7 @@ def check_rise_fall_day(context: CallbackContext) -> None:
                     try:
                         send_message(context, c_id, message)
                         chart(update_custom, context, reply=False, symbol=stonk.symbol)
-                    except error.Unauthorize:
+                    except error.Unauthorized:
                         error_message = f'Rise/Fall check: User ID {c_id} blocked our bot. Thus, this user was will be removed from chat_data.'
                         error_handler(update_custom, context, error_message)
 

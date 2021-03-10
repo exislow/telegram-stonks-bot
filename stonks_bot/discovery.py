@@ -89,11 +89,12 @@ class Discovery(object):
 
     def get_daily_performers(self, yf_url: str) -> str:
         df_perf = pd.read_html(yf_url)[0]
-        result = df_perf[
-            ['Name', 'Symbol', 'Price (Intraday)', 'Change', '% Change']
-        ].to_string(header=['Company', 'Sym', 'Price', '±', '%'],
-                    index=False, formatters={'Name': '{:.10}'.format,
-                                             '% Change': formatter_shorten_1})
+        columns = ['Name', 'Symbol', 'Price (Intraday)', 'Change', '% Change']
+        result = df_perf[columns].to_string(header=['Company', 'Sym', 'Price', '±', '%'],
+                    index=False, formatters={columns[0]: '{:.9}'.format,
+                                             columns[4]: formatter_shorten_1,
+                                             columns[2]: '{:7.2f}'.format,
+                                             columns[3]: '{:7.2f}'.format})
 
         return result
 
