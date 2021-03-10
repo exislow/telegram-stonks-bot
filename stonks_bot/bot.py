@@ -245,7 +245,7 @@ def check_rise_fall_day(context: CallbackContext) -> None:
                         send_message(context, c_id, message)
                         chart(update_custom, context, reply=False, symbol=stonk.symbol)
                     except error.Unauthorize:
-                        context.job.context.dispatcher.chat_data.pop(c_id)
+                        del context.job.context.dispatcher.chat_data[c_id]
 
                         break
 
