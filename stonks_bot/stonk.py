@@ -75,7 +75,7 @@ class Stonk(object):
 
         symbol = False
 
-        if data['count'] > 0:
+        if len(data['quotes']) > 0:
             symbol = data['quotes'][0]['symbol']
 
         return symbol
@@ -91,7 +91,7 @@ class Stonk(object):
                 yf_df.index = yf_df.index.tz_convert(conf.LOCAL['tz'])
         except AttributeError as ae:
             # TODO: Log it / send it to master
-            raise AttributeError(msg=yf_df.to_dict())
+            raise AttributeError(msg=yf_df)
 
         return yf_df
 
@@ -152,6 +152,6 @@ class Stonk(object):
         result = False
 
         if t.calendar is not None:
-            result = t.calendar[0]['Earnings Date']
+            result = t.calendar.iloc[:, 0]['Earnings Date']
 
         return result

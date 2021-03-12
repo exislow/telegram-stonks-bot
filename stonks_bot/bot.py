@@ -29,7 +29,7 @@ from stonks_bot.helper.args import parse_symbol, parse_daily_perf_count
 from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
-from stonks_bot.helper.formatters import formatter_digits
+from stonks_bot.helper.formatters import formatter_conditional_no_dec
 from stonks_bot.helper.handler import error_handler
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
@@ -162,11 +162,11 @@ def list_price(update: Update, context: CallbackContext) -> None:
 
         df = pd.DataFrame(data, columns=columns)
         reply = df.to_string(index=False, formatters={
-            columns[1]: formatter_digits,
-            columns[2]: formatter_digits,
-            columns[3]: formatter_digits,
-            columns[4]: formatter_digits,
-            columns[5]: formatter_digits
+            columns[1]: formatter_conditional_no_dec,
+            columns[2]: formatter_conditional_no_dec,
+            columns[3]: formatter_conditional_no_dec,
+            columns[4]: formatter_conditional_no_dec,
+            columns[5]: formatter_conditional_no_dec
         })
         reply = f'🚀 🚀 🚀 📉 📉 📉\n\n{reply}'
     else:
@@ -247,7 +247,8 @@ def check_rise_fall_day(context: CallbackContext) -> None:
                         send_message(context, c_id, message)
                         chart(update_custom, context, reply=False, symbol=stonk.symbol)
                     except error.Unauthorized:
-                        error_message = f'Rise/Fall check: User ID {c_id} blocked our bot. Thus, this user was will be removed from chat_data.'
+                        error_message = f'Rise/Fall check: User ID {c_id} blocked our bot. Thus, this user was will ' \
+                                        f'be removed from chat_data.'
                         error_handler(update_custom, context, error_message)
 
                         del context.job.context.dispatcher.chat_data[c_id]

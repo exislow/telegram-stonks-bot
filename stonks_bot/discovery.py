@@ -8,7 +8,8 @@ from bs4 import BeautifulSoup
 from yahoo_earnings_calendar import YahooEarningsCalendar
 
 from stonks_bot import conf
-from stonks_bot.helper.formatters import formatter_date, formatter_shorten_1, formatter_offset_1
+from stonks_bot.helper.formatters import formatter_date, formatter_shorten_1, formatter_offset_1, formatter_percent, \
+    formatter_conditional_no_dec
 from stonks_bot.helper.plot import PlotContext
 from stonks_bot.helper.web import get_user_agent
 
@@ -91,20 +92,19 @@ class Discovery(object):
         df_perf = pd.read_html(yf_url)[0]
         columns = ['Name', 'Symbol', 'Price (Intraday)', 'Change', '% Change']
         result = df_perf[columns].to_string(header=['Company', 'Sym', 'Price', '±', '%'],
-                    index=False, formatters={columns[0]: '{:.9}'.format,
-                                             columns[4]: formatter_shorten_1,
-                                             columns[2]: '{:7.2f}'.format,
-                                             columns[3]: '{:7.2f}'.format})
+                                            index=False, formatters={columns[0]: '{:.9}'.format,
+                                                                     columns[2]: formatter_conditional_no_dec,
+                                                                     columns[3]: formatter_conditional_no_dec,
+                                                                     columns[4]: formatter_percent})
 
         return result
 
     def orders(self, count: int = 15) -> str:
         url = f'https://finance.yahoo.com/most-active?offset=0&count={count}'
         df_orders = pd.read_html(url)[0]
-        result = df_orders[
-            ['Name', 'Symbol', 'Volume']
-        ].to_string(header=['Company', 'Sym', 'Volume'],
-                    index=False, formatters={'Name': '{:.15}'.format})
+        columns = ['Name', 'Symbol', 'Volume']
+        result = df_orders[columns].to_string(header=['Company', 'Sym', 'Volume'],
+                                              index=False, formatters={columns[0]: '{:.15}'.format})
 
         return result
 

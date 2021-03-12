@@ -23,9 +23,9 @@ def reply_random_gif(update: Update, search_term) -> None:
 
 
 def reply_symbol_error(update: Update, symbol: str) -> None:
-    reply = f'❌ Symbol *{symbol}* does not exist\.'
+    reply = f'❌ Symbol <b>{symbol}</b> does not exist.'
 
-    reply_message(update, reply, parse_mode=ParseMode.MARKDOWN_V2)
+    reply_message(update, reply, parse_mode=ParseMode.HTML)
 
 
 def reply_message(update: Update, text: str, parse_mode: str = None, pre: bool = False) -> None:

@@ -20,9 +20,11 @@ logger = logging.getLogger(__name__)
 
 def error_handler(update: Update, context: CallbackContext, error_message: Union[bool, str] = None) -> None:
     """Log the error and send a telegram message to notify the developer."""
-    # Log the error before we do anything else, so we can see it even if something breaks.
+    handling_type = 'an update' if update else 'a job from queue'
+
+    # Log the error before we do anything else, so we can see it even if something breaks
     if context.error:
-        logger.error(msg='Exception while handling an update:', exc_info=context.error)
+        logger.error(msg=f'Exception while handling {handling_type}:', exc_info=context.error)
 
     if not error_message:
         # traceback.format_exception returns the usual python message about an exception, but as a
@@ -38,11 +40,11 @@ def error_handler(update: Update, context: CallbackContext, error_message: Union
     # Build the message with some markup and additional information about what happened.
     # You might need to add some logic to deal with messages longer than the 4096 character limit.
     update_dict = update.to_dict() if isinstance(update, Update) else None
-    bot_data = context.job.context.dispatcher.bot_data if context.job else context.bot_data
-    chat_data = context.job.context.dispatcher.chat_data if context.job else context.chat_data
-    user_data = context.job.context.dispatcher.user_data if context.job else context.user_data
+    bot_data = context.bot_data if update else context.dispatcher.bot_data
+    chat_data = context.chat_data if update else context.dispatcher.chat_data
+    user_data = context.user_data if update else context.dispatcher.user_data
     message = (
-        f'An {error_type} was raised while handling an update.\n\n'
+        f'An {error_type} was raised while handling {handling_type}.\n\n'
         f'update = {html.escape(json.dumps(update_dict, indent=2, ensure_ascii=False))}\n\n'
         f'context.bot_data = {html.escape(str(bot_data))}\n\n'
         f'context.chat_data = {html.escape(str(chat_data))}\n\n'
