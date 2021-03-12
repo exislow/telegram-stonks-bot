@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 import yfinance as yf
 
-from stonks_bot import c, conf
+from stonks_bot import c, conf, Currency
 from stonks_bot.dataclasses.performance import Performance
 from stonks_bot.dataclasses.price_daily import PriceDaily
 from stonks_bot.helper.exceptions import InvalidSymbol
@@ -19,7 +19,7 @@ class Stonk(object):
     is_valid: bool = False
     name: str = None
     isin: str = None
-    currency: str = None
+    currency_api: str = None
     added_at: datetime = datetime.now()
     daily_rise: Performance = Performance()
     daily_fall: Performance = Performance()
@@ -37,9 +37,9 @@ class Stonk(object):
         symbol_split = symbol.split('-')
 
         if len(symbol_split) > 1:
-            self.currency = symbol_split[-1]
+            self.currency_api = symbol_split[-1]
         else:
-            self.currency = conf.API['finance_currency']
+            self.currency_api = conf.API['finance_currency']
 
     def _symbol_validate(self, symbol: str) -> None:
         symbol_result = self._symbol_search(symbol)
@@ -60,10 +60,10 @@ class Stonk(object):
 
     def _convert_to_local_currency(self, yf_df: pd.DataFrame) -> pd.DataFrame:
         result = yf_df
+        c = Currency()
 
-        if self.currency != c.currency_local:
-            exchange_rate = c.get_exchange_rate(self.currency)
-            result = result * exchange_rate
+        if self.currency_api != c.currency_local:
+            result = c.convert_to_currency(self.currency_api, result, ['Open', 'High', 'Low', 'Close', 'Adj Close'])
 
         return result
 
@@ -89,9 +89,9 @@ class Stonk(object):
         try:
             if yf_df.index.tzinfo is not None and yf_df.index.tzinfo.utcoffset(yf_df.index) is not None:
                 yf_df.index = yf_df.index.tz_convert(conf.LOCAL['tz'])
-        except AttributeError as ae:
+        except AttributeError as e:
             # TODO: Log it / send it to master
-            raise AttributeError(msg=yf_df)
+            raise Exception(yf_df).with_traceback(e.__traceback__)
 
         return yf_df
 

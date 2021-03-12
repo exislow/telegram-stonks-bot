@@ -1,4 +1,8 @@
+from typing import Union
+
 from dateutil import parser
+
+from stonks_bot.helper.math import round_currency_scalar
 
 
 def formatter_date(datetime_str: str) -> str:
@@ -19,8 +23,8 @@ def formatter_no_plus(text: str) -> str:
     return text.replace('+', '')
 
 
-def formatter_conditional_no_dec(text: str) -> str:
-    val = float(text)
+def formatter_conditional_no_dec(val: Union[str, float]) -> str:
+    val = float(val) if isinstance(val, str) else val
     result = int(val) if val >= 100 or val <= -100 else val
 
     return str(result)
@@ -31,3 +35,11 @@ def formatter_percent(text: str) -> str:
     result = formatter_conditional_no_dec(result)
 
     return result
+
+
+def formatter_round_currency_scalar(val: Union[str, float]) -> str:
+    val = float(val) if isinstance(val, str) else val
+    val = round_currency_scalar(val)
+    val = formatter_conditional_no_dec(val)
+
+    return val

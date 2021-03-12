@@ -7,9 +7,9 @@ from alpha_vantage.sectorperformance import SectorPerformances
 from bs4 import BeautifulSoup
 from yahoo_earnings_calendar import YahooEarningsCalendar
 
-from stonks_bot import conf
+from stonks_bot import conf, Currency
 from stonks_bot.helper.formatters import formatter_date, formatter_shorten_1, formatter_offset_1, formatter_percent, \
-    formatter_conditional_no_dec
+    formatter_conditional_no_dec, formatter_round_currency_scalar
 from stonks_bot.helper.plot import PlotContext
 from stonks_bot.helper.web import get_user_agent
 
@@ -34,6 +34,12 @@ class Discovery(object):
         {'url': 'https://www.spachero.com', 'description': 'SPAC Hero Research'},
         {'url': 'https://unusualwhales.com/spacs', 'description': 'UnusualWhales SPAC Research'}
     ]
+    currency_api: str = None
+    currency: Currency = None
+
+    def __init__(self):
+        self.currency_api = conf.API['finance_currency']
+        self.currency = Currency()
 
     def performance_sectors_sp500(self, timespan: str = 'realtime') -> BytesIO:
         sp = SectorPerformances(key=conf.API['alphavantage_api_key'], output_format='pandas')
@@ -88,22 +94,27 @@ class Discovery(object):
 
         return result
 
-    def get_daily_performers(self, yf_url: str) -> str:
-        df_perf = pd.read_html(yf_url)[0]
+    def get_daily_performers(self, yf_url: str, convert_currency: bool = True) -> str:
+        df = pd.read_html(yf_url)[0]
         columns = ['Name', 'Symbol', 'Price (Intraday)', 'Change', '% Change']
-        result = df_perf[columns].to_string(header=['Company', 'Sym', 'Price', '±', '%'],
+
+        if convert_currency:
+            columns_to_convert = [columns[2], columns[3]]
+            df = self.currency.convert_to_currency(self.currency_api, df, columns_to_convert)
+
+        result = df[columns].to_string(header=['Company', 'Sym', 'Price', '±', '%'],
                                             index=False, formatters={columns[0]: '{:.9}'.format,
-                                                                     columns[2]: formatter_conditional_no_dec,
-                                                                     columns[3]: formatter_conditional_no_dec,
+                                                                     columns[2]: formatter_round_currency_scalar,
+                                                                     columns[3]: formatter_round_currency_scalar,
                                                                      columns[4]: formatter_percent})
 
         return result
 
     def orders(self, count: int = 15) -> str:
         url = f'https://finance.yahoo.com/most-active?offset=0&count={count}'
-        df_orders = pd.read_html(url)[0]
+        df = pd.read_html(url)[0]
         columns = ['Name', 'Symbol', 'Volume']
-        result = df_orders[columns].to_string(header=['Company', 'Sym', 'Volume'],
+        result = df[columns].to_string(header=['Company', 'Sym', 'Volume'],
                                               index=False, formatters={columns[0]: '{:.15}'.format})
 
         return result
@@ -132,12 +143,20 @@ class Discovery(object):
 
         return result
 
-    def hot_pennystocks(self, count: int = 15) -> str:
+    def hot_pennystocks(self, count: int = 15, convert_currency: bool = True) -> str:
         url = 'https://www.pennystockflow.com/'
         df = self.get_short_float_penny(url)
         columns = ['Ticker', '# Trades', 'Price', 'Change']
+        # Remove the $ symbol.
+        df[columns[2]] = df['Price'].str.slice(start=1)
+        df[columns[2]] = pd.to_numeric(df[columns[2]], errors='coerce')
+
+        if convert_currency:
+            columns_to_convert = [columns[2]]
+            df = self.currency.convert_to_currency(self.currency_api, df, columns_to_convert)
+
         result = df[columns].head(n=count).to_string(header=['Sym.', 'Trades', 'Price', '±%'], index=False,
-                                                     formatters={columns[2]: formatter_offset_1,
+                                                     formatters={columns[2]: formatter_round_currency_scalar,
                                                                  columns[3]: formatter_shorten_1})
 
         return result
