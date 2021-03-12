@@ -83,13 +83,13 @@ class Discovery(object):
         return result
 
     def undervalued_large_caps(self, count: int = 15) -> str:
-        url = f'https://ca.finance.yahoo.com/screener/predefined/undervalued_large_caps?offset=0&count={count}'
+        url = f'https://finance.yahoo.com/screener/predefined/undervalued_large_caps?offset=0&count={count}'
         result = self.get_daily_performers(url)
 
         return result
 
     def undervalued_growth(self, count: int = 15) -> str:
-        url = f'https://ca.finance.yahoo.com/screener/predefined/undervalued_growth_stocks?offset=0&count={count}'
+        url = f'https://finance.yahoo.com/screener/predefined/undervalued_growth_stocks?offset=0&count={count}'
         result = self.get_daily_performers(url)
 
         return result

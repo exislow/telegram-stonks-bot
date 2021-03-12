@@ -348,7 +348,7 @@ def gainers(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.gainers(count)
-    text = f'🚀 🚀 🚀\n\n{text}'
+    text = f'🚀 🚀 🚀 (EUR)\n\n{text}\n\n<a href="https://finance.yahoo.com/gainers">Source</a>'
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -359,7 +359,7 @@ def losers(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.losers(count)
-    text = f'📉 📉 📉\n\n{text}'
+    text = f'📉 📉 📉 (EUR)\n\n{text}\n\n<a href="https://finance.yahoo.com/losers">Source</a>'
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -370,7 +370,7 @@ def orders(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.orders(count)
-    text = f'📖 📖 📖\n\n{text}'
+    text = f'📖 📖 📖\n\n{text}\n\n<a href="https://finance.yahoo.com/most-active">Source</a>'
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -381,7 +381,7 @@ def high_short(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.high_short(count)
-    text = f'🩳 🩳 🩳\n\n{text}'
+    text = f'🩳 🩳 🩳\n\n{text}\n\n<a href="https://www.highshortinterest.com/">Source</a>'
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -392,7 +392,7 @@ def low_float(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.low_float(count)
-    text = f'🤲 🤲 🤲\n\n{text}'
+    text = f'🤲 🤲 🤲\n\n{text}\n\n<a href="https://www.lowfloat.com/">Source</a>'
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -403,7 +403,7 @@ def hot_penny(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.hot_pennystocks(count)
-    text = f'🔥 👼 💰\n\n{text}'
+    text = f'🔥 👼 💰 (EUR)\n\n{text}\n\n<a href="https://www.pennystockflow.com/">Source</a>'
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -414,7 +414,7 @@ def underval_large(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.undervalued_large_caps(count)
-    text = f'👼 🐖 🐖\n\n{text}'
+    text = f'👼 🐖 🐖 (EUR)\n\n{text}\n\n<a href="https://finance.yahoo.com/screener/predefined/undervalued_large_caps">Source</a>'
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -425,7 +425,7 @@ def underval_growth(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.undervalued_growth(count)
-    text = f'👼 🕺 🕺\n\n{text}'
+    text = f'👼 🕺 🕺 (EUR)\n\n{text}\n\n<a href="https://finance.yahoo.com/screener/predefined/undervalued_growth_stocks">Source</a>'
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
