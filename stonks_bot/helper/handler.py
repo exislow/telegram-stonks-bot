@@ -1,7 +1,8 @@
 import html
-import logging
 import json
+import logging
 import traceback
+from json import JSONEncoder
 from typing import Union
 
 from telegram import Update, ParseMode
@@ -9,7 +10,6 @@ from telegram.ext import CallbackContext
 
 from stonks_bot import conf
 from stonks_bot.helper.message import send_message
-
 
 logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -46,11 +46,16 @@ def error_handler(update: Update, context: CallbackContext, error_message: Union
     message = (
         f'An {error_type} was raised while handling {handling_type}.\n\n'
         f'update = {html.escape(json.dumps(update_dict, indent=2, ensure_ascii=False))}\n\n'
-        f'context.bot_data = {html.escape(str(bot_data))}\n\n'
-        f'context.chat_data = {html.escape(str(chat_data))}\n\n'
-        f'context.user_data = {html.escape(str(user_data))}\n\n'
+        f'context.bot_data = {html.escape(json.dumps(bot_data, indent=2, ensure_ascii=False, cls=TelegramEncoder))}\n\n'
+        f'context.chat_data = {html.escape(json.dumps(chat_data, indent=2, ensure_ascii=False, cls=TelegramEncoder))}\n\n'
+        f'context.user_data = {html.escape(json.dumps(user_data, indent=2, ensure_ascii=False, cls=TelegramEncoder))}\n\n'
         f'{additional_info}'
     )
 
     # Finally, send the message
     send_message(context, conf.USER_ID['master'], message, parse_mode=ParseMode.HTML, pre=True)
+
+
+class TelegramEncoder(JSONEncoder):
+    def default(self, o):
+        return o.to_dict()
