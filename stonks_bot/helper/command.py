@@ -19,7 +19,9 @@ def log_error(func_error_handler: Callable[..., Any], error_message: str) -> Uni
             func_error_handler(update, context, error_message)
 
             return func(update, context, *args, **kwargs)
+
         return wrapped
+
     return decorator
 
 
@@ -39,11 +41,14 @@ def restricted_command(func_error_handler: Callable[..., Any], error_message: st
 
                 return
             return func(update, context, *args, **kwargs)
+
         return wrapped
+
     return decorator
 
 
-def restricted_group_command(func_error_handler: Callable[..., Any], error_message: str) -> Union[Callable[..., Any], bool]:
+def restricted_group_command(func_error_handler: Callable[..., Any], error_message: str) -> Union[
+    Callable[..., Any], bool]:
     def decorator(func: Callable[..., Any]) -> Union[Callable[..., Any], bool]:
         @wraps(func)
         def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable[..., Any], bool]:
@@ -59,7 +64,9 @@ def restricted_group_command(func_error_handler: Callable[..., Any], error_messa
 
                 return
             return func(update, context, *args, **kwargs)
+
         return wrapped
+
     return decorator
 
 
@@ -81,7 +88,9 @@ def restricted_add(func_error_handler: Callable[..., Any], error_message: str) -
 
                 return
             return func(update, context, *args, **kwargs)
+
         return wrapped
+
     return decorator
 
 
@@ -102,6 +111,7 @@ def check_symbol_limit(func: Callable[..., Any]) -> Union[Callable[..., Any], bo
 
             return
         return func(update, context, *args, **kwargs)
+
     return wrapped
 
 
@@ -113,4 +123,5 @@ def send_typing_action(func: Callable[..., Any]) -> Callable[..., Any]:
         context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
         return func(update, context, *args, **kwargs)
+
     return command_func

@@ -1,11 +1,11 @@
 from datetime import datetime
 from typing import Union, List
 
-import yfinance as yf
 import pandas as pd
+import yfinance as yf
 
-from stonks_bot.dataclasses.currency_exchange import CurrencyExchange
 from stonks_bot import conf
+from stonks_bot.dataclasses.currency_exchange import CurrencyExchange
 
 
 class Currency(object):

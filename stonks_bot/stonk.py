@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 import yfinance as yf
 
-from stonks_bot import c, conf, Currency
+from stonks_bot import conf, Currency
 from stonks_bot.dataclasses.performance import Performance
 from stonks_bot.dataclasses.price_daily import PriceDaily
 from stonks_bot.helper.exceptions import InvalidSymbol

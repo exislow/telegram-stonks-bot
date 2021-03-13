@@ -128,7 +128,7 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
 @restricted_group_command(error_handler, 'Execution of this command in a group chat is forbidden (restricted access).')
 def stonk_clear(update: Update, context: CallbackContext) -> NoReturn:
     context.chat_data[conf.INTERNALS['stock']] = {}
-    #clear_daily_dict(context.chat_data)
+    # clear_daily_dict(context.chat_data)
     reply = f'🖤 Watch list purged.'
 
     reply_message(update, reply)
@@ -166,11 +166,13 @@ def clear_chat_data_stonk(chat_data: defaultdict) -> bool:
         fall = daily.get(conf.JOBS['check_rise_fall_day']['dict']['fall'], None)
 
         if rise and len(rise) > 0:
-            chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']][conf.JOBS['check_rise_fall_day']['dict']['rise']] = factory_defaultdict()
+            chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']][
+                conf.JOBS['check_rise_fall_day']['dict']['rise']] = factory_defaultdict()
             cleared = True
 
         if fall and len(fall) > 0:
-            chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']][conf.JOBS['check_rise_fall_day']['dict']['fall']] = factory_defaultdict()
+            chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']][
+                conf.JOBS['check_rise_fall_day']['dict']['fall']] = factory_defaultdict()
             cleared = True
 
     return cleared
@@ -385,7 +387,8 @@ def gainers(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.gainers(count)
-    text = f"""🚀 🚀 🚀 ({conf.LOCAL['currency']})\n\n{text}\n\n<a href="https://finance.yahoo.com/gainers">Source</a>"""
+    text = f"""🚀 🚀 🚀 ({conf.LOCAL['currency']})\n\n{text}\n\n<a
+    href="https://finance.yahoo.com/gainers">Source</a>"""
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -451,7 +454,8 @@ def underval_large(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.undervalued_large_caps(count)
-    text = f"""👼 🐖 🐖 ({conf.LOCAL['currency']})\n\n{text}\n\n<a href="https://finance.yahoo.com/screener/predefined/undervalued_large_caps">Source</a>"""
+    text = f"""👼 🐖 🐖 ({conf.LOCAL['currency']})\n\n{text}\n\n<a
+    href="https://finance.yahoo.com/screener/predefined/undervalued_large_caps">Source</a>"""
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -462,7 +466,8 @@ def underval_growth(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.undervalued_growth(count)
-    text = f"""👼 🕺 🕺 ({conf.LOCAL['currency']})\n\n{text}\n\n<a href="https://finance.yahoo.com/screener/predefined/undervalued_growth_stocks">Source</a>"""
+    text = f"""👼 🕺 🕺 ({conf.LOCAL['currency']})\n\n{text}\n\n<a
+    href="https://finance.yahoo.com/screener/predefined/undervalued_growth_stocks">Source</a>"""
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
