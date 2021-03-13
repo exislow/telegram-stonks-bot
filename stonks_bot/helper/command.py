@@ -39,6 +39,26 @@ def restricted_command(func_error_handler: Callable, error_message: str) -> Unio
     return decorator
 
 
+def restricted_group_command(func_error_handler: Callable, error_message: str) -> Union[Callable, bool]:
+    def decorator(func: Callable) -> Union[Callable, bool]:
+        @wraps(func)
+        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable, bool]:
+            user_id = update.effective_user.id
+
+            if user_id not in conf.USER_ID['admins'] and update.effective_chat.id < 0:
+                func_error_handler(update, context, error_message)
+
+                reply = f'🖕🖕🖕 You are not allowed run this command.'
+                update.message.reply_text(reply)
+
+                reply_random_gif(update, 'fuck you')
+
+                return
+            return func(update, context, *args, **kwargs)
+        return wrapped
+    return decorator
+
+
 def restricted_add(func_error_handler: Callable, error_message: str) -> Union[Callable, bool]:
     def decorator(func: Callable) -> Union[Callable, bool]:
         @wraps(func)

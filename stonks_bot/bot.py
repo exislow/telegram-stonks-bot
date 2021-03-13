@@ -15,8 +15,8 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 from collections import defaultdict
-from datetime import datetime
-from typing import Union
+from datetime import datetime, timedelta
+from typing import Union, NoReturn
 
 import pandas as pd
 from telegram import Update, ParseMode, Message, Chat, error
@@ -26,7 +26,8 @@ from stonks_bot import conf
 from stonks_bot.actions import bot_added_to_group
 from stonks_bot.discovery import Discovery
 from stonks_bot.helper.args import parse_symbol, parse_daily_perf_count
-from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error
+from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error, \
+    restricted_group_command
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.formatters import formatter_conditional_no_dec
@@ -38,15 +39,15 @@ from stonks_bot.stonk import Stonk
 
 
 @log_error(error_handler, 'Command does not exist.')
-def command_unknown(update: Update, context: CallbackContext) -> None:
+def command_unknown(update: Update, context: CallbackContext) -> NoReturn:
     reply_command_unknown(update)
 
 
-def start(update: Update, context: CallbackContext) -> None:
+def start(update: Update, context: CallbackContext) -> NoReturn:
     help(update, context)
 
 
-def help(update: Update, context: CallbackContext) -> None:
+def help(update: Update, context: CallbackContext) -> NoReturn:
     reply = """Hi, I am the STONKS BOT! Try to use the following commands:
 * /stonk_add <SYMBOL/ISIN> | /sa -> Add a stock to the watchlist.
 * /stonk_del <SYMBOL/ISIN> | /sd -> Delete a stock from the watchlist.
@@ -124,16 +125,58 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
     reply_message(update, reply, parse_mode=ParseMode.MARKDOWN_V2)
 
 
-@restricted_command(error_handler, 'Command execution forbidden (restricted access).')
-def stonk_clear(update: Update, context: CallbackContext) -> None:
+@restricted_group_command(error_handler, 'Execution of this command in a group chat is forbidden (restricted access).')
+def stonk_clear(update: Update, context: CallbackContext) -> NoReturn:
     context.chat_data[conf.INTERNALS['stock']] = {}
-    clear_daily_dict(context.chat_data)
+    #clear_daily_dict(context.chat_data)
     reply = f'🖤 Watch list purged.'
 
     reply_message(update, reply)
 
 
-def stonk_list(update: Update, context: CallbackContext) -> None:
+@restricted_command(error_handler, 'Command execution forbidden (restricted access).')
+def all_stonk_clear(update: Update, context: CallbackContext) -> NoReturn:
+    # TODO: Maybe send the stick_list to the chat first before clearing.
+    global_chat_data = context.dispatcher.chat_data
+    cleared_chats = []
+
+    for chat_id, chat_dict in global_chat_data.items():
+        result_clear = clear_chat_data_stonk(chat_dict)
+
+        if result_clear:
+            cleared_chats.append(chat_id)
+
+    for chat_id in cleared_chats:
+        reply = '🖤 Your watch list had to be purged due to maintenance reasons. ' \
+                'All symbols need to be re-added by you again. Sorry for inconvenience.'
+        send_message(context, chat_id, reply)
+
+
+def clear_chat_data_stonk(chat_data: defaultdict) -> bool:
+    stonks = chat_data.get(conf.INTERNALS['stock'], None)
+    daily = chat_data.get(conf.JOBS['check_rise_fall_day']['dict']['daily'], None)
+    cleared = False
+
+    if stonks and len(stonks) > 0:
+        chat_data[conf.INTERNALS['stock']] = factory_defaultdict()
+        cleared = True
+
+    if daily and len(daily) > 0:
+        rise = daily.get(conf.JOBS['check_rise_fall_day']['dict']['rise'], None)
+        fall = daily.get(conf.JOBS['check_rise_fall_day']['dict']['fall'], None)
+
+        if rise and len(rise) > 0:
+            chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']][conf.JOBS['check_rise_fall_day']['dict']['rise']] = factory_defaultdict()
+            cleared = True
+
+        if fall and len(fall) > 0:
+            chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']][conf.JOBS['check_rise_fall_day']['dict']['fall']] = factory_defaultdict()
+            cleared = True
+
+    return cleared
+
+
+def stonk_list(update: Update, context: CallbackContext) -> NoReturn:
     stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
     reply = ''
 
@@ -149,7 +192,7 @@ def stonk_list(update: Update, context: CallbackContext) -> None:
 
 
 @send_typing_action
-def list_price(update: Update, context: CallbackContext) -> None:
+def list_price(update: Update, context: CallbackContext) -> NoReturn:
     stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
     columns = ['Sym.', '⬆️ H', '⬇️️ L', '🛬 C', f"±{conf.LOCAL['currency']}", '±%']
     data = []
@@ -199,7 +242,7 @@ def chart(update: Update, context: CallbackContext, reply: bool = True, symbol: 
         send_photo(context, update.effective_message.chat_id, c_buf)
 
 
-def check_rise_fall_day(context: CallbackContext) -> None:
+def check_rise_fall_day(context: CallbackContext) -> NoReturn:
     chat_data = context.job.context.dispatcher.chat_data
     datetime_now = datetime.now()
     date_now = datetime_now.date()
@@ -268,19 +311,13 @@ def removed_from_group(update: Update, context: CallbackContext):
         context.bot_data[conf.INTERNALS['groups']] = g
 
 
-def bot_init(updater: Updater) -> None:
+def bot_init(updater: Updater) -> NoReturn:
     pass
 
 
 def get_daily_dict(chat_data: dict) -> defaultdict:
     d = chat_data.get(conf.JOBS['check_rise_fall_day']['dict']['daily'], factory_defaultdict())
     chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']] = d
-
-    return chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']]
-
-
-def clear_daily_dict(chat_data: dict) -> defaultdict:
-    chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']] = factory_defaultdict()
 
     return chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']]
 
@@ -348,7 +385,7 @@ def gainers(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.gainers(count)
-    text = f'🚀 🚀 🚀 (EUR)\n\n{text}\n\n<a href="https://finance.yahoo.com/gainers">Source</a>'
+    text = f"""🚀 🚀 🚀 ({conf.LOCAL['currency']})\n\n{text}\n\n<a href="https://finance.yahoo.com/gainers">Source</a>"""
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -359,7 +396,7 @@ def losers(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.losers(count)
-    text = f'📉 📉 📉 (EUR)\n\n{text}\n\n<a href="https://finance.yahoo.com/losers">Source</a>'
+    text = f"""📉 📉 📉 ({conf.LOCAL['currency']})\n\n{text}\n\n<a href="https://finance.yahoo.com/losers">Source</a>"""
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -403,7 +440,7 @@ def hot_penny(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.hot_pennystocks(count)
-    text = f'🔥 👼 💰 (EUR)\n\n{text}\n\n<a href="https://www.pennystockflow.com/">Source</a>'
+    text = f"""🔥 👼 💰 ({conf.LOCAL['currency']})\n\n{text}\n\n<a href="https://www.pennystockflow.com/">Source</a>"""
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -414,7 +451,7 @@ def underval_large(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.undervalued_large_caps(count)
-    text = f'👼 🐖 🐖 (EUR)\n\n{text}\n\n<a href="https://finance.yahoo.com/screener/predefined/undervalued_large_caps">Source</a>'
+    text = f"""👼 🐖 🐖 ({conf.LOCAL['currency']})\n\n{text}\n\n<a href="https://finance.yahoo.com/screener/predefined/undervalued_large_caps">Source</a>"""
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
 
@@ -425,9 +462,14 @@ def underval_growth(update: Update, context: CallbackContext):
 
     d = Discovery()
     text = d.undervalued_growth(count)
-    text = f'👼 🕺 🕺 (EUR)\n\n{text}\n\n<a href="https://finance.yahoo.com/screener/predefined/undervalued_growth_stocks">Source</a>'
+    text = f"""👼 🕺 🕺 ({conf.LOCAL['currency']})\n\n{text}\n\n<a href="https://finance.yahoo.com/screener/predefined/undervalued_growth_stocks">Source</a>"""
 
     reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
+
+
+@restricted_command(error_handler, 'Command execution forbidden (restricted access).')
+def exec_job_check_rise_fall(update: Update, context: CallbackContext):
+    context.job_queue.run_once(check_rise_fall_day, timedelta(seconds=1), context=context)
 
 
 def main():
@@ -479,6 +521,10 @@ def main():
     dispatcher.add_handler(CommandHandler('ul', underval_large, run_async=True))
     dispatcher.add_handler(CommandHandler('underval_growth', underval_growth, run_async=True))
     dispatcher.add_handler(CommandHandler('ug', underval_growth, run_async=True))
+    dispatcher.add_handler(CommandHandler('exec_job_check_rise_fall', exec_job_check_rise_fall))
+    dispatcher.add_handler(CommandHandler('ejcrf', exec_job_check_rise_fall))
+    dispatcher.add_handler(CommandHandler('all_stonk_clear', all_stonk_clear))
+    dispatcher.add_handler(CommandHandler('asc', all_stonk_clear))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)
