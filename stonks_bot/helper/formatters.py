@@ -1,4 +1,6 @@
-from typing import Union
+import json
+from json import JSONEncoder
+from typing import Union, Any
 
 from dateutil import parser
 
@@ -43,3 +45,12 @@ def formatter_round_currency_scalar(val: Union[str, float]) -> str:
     val = formatter_conditional_no_dec(val)
 
     return val
+
+
+def formatter_to_json(val: Any) -> str:
+    return json.dumps(val, indent=2, ensure_ascii=False, cls=TelegramEncoder)
+
+
+class TelegramEncoder(JSONEncoder):
+    def default(self, o):
+        return o.to_dict()
