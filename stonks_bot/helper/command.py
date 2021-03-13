@@ -8,10 +8,14 @@ from stonks_bot import conf
 from stonks_bot.helper.message import reply_random_gif
 
 
-def log_error(func_error_handler: Callable, error_message: str) -> Union[Callable, bool]:
-    def decorator(func: Callable) -> Union[Callable, bool]:
+class Any(object):
+    pass
+
+
+def log_error(func_error_handler: Callable[..., Any], error_message: str) -> Union[Callable, bool]:
+    def decorator(func: Callable[..., Any]) -> Union[Callable, bool]:
         @wraps(func)
-        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable, bool]:
+        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable[..., Any], bool]:
             func_error_handler(update, context, error_message)
 
             return func(update, context, *args, **kwargs)
@@ -19,10 +23,10 @@ def log_error(func_error_handler: Callable, error_message: str) -> Union[Callabl
     return decorator
 
 
-def restricted_command(func_error_handler: Callable, error_message: str) -> Union[Callable, bool]:
-    def decorator(func: Callable) -> Union[Callable, bool]:
+def restricted_command(func_error_handler: Callable[..., Any], error_message: str) -> Union[Callable, bool]:
+    def decorator(func: Callable[..., Any]) -> Union[Callable[..., Any], bool]:
         @wraps(func)
-        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable, bool]:
+        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable[..., Any], bool]:
             user_id = update.effective_user.id
 
             if user_id not in conf.USER_ID['admins']:
@@ -39,10 +43,10 @@ def restricted_command(func_error_handler: Callable, error_message: str) -> Unio
     return decorator
 
 
-def restricted_group_command(func_error_handler: Callable, error_message: str) -> Union[Callable, bool]:
-    def decorator(func: Callable) -> Union[Callable, bool]:
+def restricted_group_command(func_error_handler: Callable[..., Any], error_message: str) -> Union[Callable[..., Any], bool]:
+    def decorator(func: Callable[..., Any]) -> Union[Callable[..., Any], bool]:
         @wraps(func)
-        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable, bool]:
+        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable[..., Any], bool]:
             user_id = update.effective_user.id
 
             if user_id not in conf.USER_ID['admins'] and update.effective_chat.id < 0:
@@ -59,8 +63,8 @@ def restricted_group_command(func_error_handler: Callable, error_message: str) -
     return decorator
 
 
-def restricted_add(func_error_handler: Callable, error_message: str) -> Union[Callable, bool]:
-    def decorator(func: Callable) -> Union[Callable, bool]:
+def restricted_add(func_error_handler: Callable[..., Any], error_message: str) -> Union[Callable[..., Any], bool]:
+    def decorator(func: Callable[..., Any]) -> Union[Callable[..., Any], bool]:
         @wraps(func)
         def wrapped(update: Update, context: CallbackContext, *args, **kwargs):
             user_id = update.effective_user.id
@@ -81,7 +85,7 @@ def restricted_add(func_error_handler: Callable, error_message: str) -> Union[Ca
     return decorator
 
 
-def check_symbol_limit(func: Callable) -> Union[Callable, bool]:
+def check_symbol_limit(func: Callable[..., Any]) -> Union[Callable[..., Any], bool]:
     @wraps(func)
     def wrapped(update: Update, context: CallbackContext, *args, **kwargs):
         len_stonks = len(context.chat_data.get(conf.INTERNALS['stock'], {}))
@@ -101,7 +105,7 @@ def check_symbol_limit(func: Callable) -> Union[Callable, bool]:
     return wrapped
 
 
-def send_typing_action(func: Callable) -> Callable:
+def send_typing_action(func: Callable[..., Any]) -> Callable[..., Any]:
     """Sends typing action while processing func command."""
 
     @wraps(func)
