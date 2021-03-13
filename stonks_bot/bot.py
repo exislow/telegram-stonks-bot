@@ -48,10 +48,11 @@ def start(update: Update, context: CallbackContext) -> NoReturn:
 
 
 def help(update: Update, context: CallbackContext) -> NoReturn:
-    reply = """Hi, I am the STONKS BOT! Try to use the following commands:
+    reply = """Hi ape, I am the STONKS BOT! Try to use the following commands:
 * /stonk_add <SYMBOL/ISIN> | /sa -> Add a stock to the watchlist.
 * /stonk_del <SYMBOL/ISIN> | /sd -> Delete a stock from the watchlist.
-* /stonk_list | /sl -> Show the Watchlist
+* /stonk_list | /sl -> Show the watchlist.
+* /stonk_clear | /sc -> Clears the watchlist (not allowed in group chats).
 * /list_price | /lp -> List watchlist prices.
 * /chart <SYMBOL> | /c -> Plot the last trading day of a stock.
 * /discovery | /d -> Useful infos to find hot stocks.
@@ -66,6 +67,17 @@ def help(update: Update, context: CallbackContext) -> NoReturn:
 * /hot_penny (<count>) | /hp -> Show hot penny stonks.
 * /underval_large (<count>) | /ul -> Show undervalued large cap stonks.
 * /underval_growth (<count>) | /ug -> Show undervalued growth stonks.
+"""
+
+    reply_message(update, reply)
+
+
+@restricted_command()
+def help_admin(update: Update, context: CallbackContext) -> NoReturn:
+    reply = """Hi admin, I am the STONKS BOT! You are allowed to use the following commands:
+* /stonk_clear | /sc -> Clears the watchlist.
+* /all_stonk_clear | /asc -> Clears the watchlist of every user.
+* /exec_job_check_rise_fall | /ejcrf -> Executes check_rise_fall immediately.
 """
 
     reply_message(update, reply)
@@ -490,6 +502,8 @@ def main():
     dispatcher.add_handler(CommandHandler('start', start, run_async=True))
     dispatcher.add_handler(CommandHandler('help', help, run_async=True))
     dispatcher.add_handler(CommandHandler('h', help, run_async=True))
+    dispatcher.add_handler(CommandHandler('help_admin', help_admin, run_async=True))
+    dispatcher.add_handler(CommandHandler('ha', help_admin, run_async=True))
     dispatcher.add_handler(CommandHandler('stonk_add', stonk_add))
     dispatcher.add_handler(CommandHandler('sa', stonk_add))
     dispatcher.add_handler(CommandHandler('stonk_del', stonk_del))
