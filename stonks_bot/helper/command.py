@@ -12,10 +12,10 @@ class Any(object):
     pass
 
 
-def log_error(func_error_handler: Callable[..., Any], error_message: str) -> Union[Callable, bool]:
-    def decorator(func: Callable[..., Any]) -> Union[Callable, bool]:
+def log_error(func_error_handler: Callable, error_message: str) -> Union[Callable, bool]:
+    def decorator(func: Callable) -> Union[Callable, bool]:
         @wraps(func)
-        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable[..., Any], bool]:
+        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable, bool]:
             func_error_handler(update, context, error_message)
 
             return func(update, context, *args, **kwargs)
@@ -25,21 +25,26 @@ def log_error(func_error_handler: Callable[..., Any], error_message: str) -> Uni
     return decorator
 
 
-def restricted_command(func_error_handler: Callable[..., Any], error_message: str) -> Union[Callable, bool]:
-    def decorator(func: Callable[..., Any]) -> Union[Callable[..., Any], bool]:
+def restricted_command(func_error_handler: Callable, error_message: str, in_group: bool = True, in_private: bool = True) -> Union[Callable, bool]:
+    def decorator(func: Callable) -> Union[Callable, bool]:
         @wraps(func)
-        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable[..., Any], bool]:
+        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable, bool]:
             user_id = update.effective_user.id
 
             if user_id not in conf.USER_ID['admins']:
-                func_error_handler(update, context, error_message)
+                if (update.effective_chat.id < 0 and in_group) or (update.effective_chat.id > 0 and in_private):
+                    func_error_handler(update, context, error_message)
 
-                reply = f'🖕🖕🖕 You are not allowed run this command.'
-                update.message.reply_text(reply)
+                    reply = f'🖕🖕🖕 You are not allowed run this command.'
+                    update.message.reply_text(reply)
 
-                reply_random_gif(update, 'fuck you')
+                    reply_random_gif(update, 'fuck you')
 
-                return
+                    return
+                elif not in_private and not in_group:
+                    # Error state. Not allowed.
+                    # TODO: Create a message / warning to admin.
+                    return
             return func(update, context, *args, **kwargs)
 
         return wrapped
@@ -47,31 +52,8 @@ def restricted_command(func_error_handler: Callable[..., Any], error_message: st
     return decorator
 
 
-def restricted_group_command(func_error_handler: Callable[..., Any], error_message: str) -> Union[
-    Callable[..., Any], bool]:
-    def decorator(func: Callable[..., Any]) -> Union[Callable[..., Any], bool]:
-        @wraps(func)
-        def wrapped(update: Update, context: CallbackContext, *args, **kwargs) -> Union[Callable[..., Any], bool]:
-            user_id = update.effective_user.id
-
-            if user_id not in conf.USER_ID['admins'] and update.effective_chat.id < 0:
-                func_error_handler(update, context, error_message)
-
-                reply = f'🖕🖕🖕 You are not allowed run this command.'
-                update.message.reply_text(reply)
-
-                reply_random_gif(update, 'fuck you')
-
-                return
-            return func(update, context, *args, **kwargs)
-
-        return wrapped
-
-    return decorator
-
-
-def restricted_add(func_error_handler: Callable[..., Any], error_message: str) -> Union[Callable[..., Any], bool]:
-    def decorator(func: Callable[..., Any]) -> Union[Callable[..., Any], bool]:
+def restricted_add(func_error_handler: Callable, error_message: str) -> Union[Callable, bool]:
+    def decorator(func: Callable) -> Union[Callable, bool]:
         @wraps(func)
         def wrapped(update: Update, context: CallbackContext, *args, **kwargs):
             user_id = update.effective_user.id
@@ -94,7 +76,7 @@ def restricted_add(func_error_handler: Callable[..., Any], error_message: str) -
     return decorator
 
 
-def check_symbol_limit(func: Callable[..., Any]) -> Union[Callable[..., Any], bool]:
+def check_symbol_limit(func: Callable) -> Union[Callable, bool]:
     @wraps(func)
     def wrapped(update: Update, context: CallbackContext, *args, **kwargs):
         len_stonks = len(context.chat_data.get(conf.INTERNALS['stock'], {}))
@@ -115,7 +97,7 @@ def check_symbol_limit(func: Callable[..., Any]) -> Union[Callable[..., Any], bo
     return wrapped
 
 
-def send_typing_action(func: Callable[..., Any]) -> Callable[..., Any]:
+def send_typing_action(func: Callable) -> Callable:
     """Sends typing action while processing func command."""
 
     @wraps(func)
