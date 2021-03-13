@@ -14,6 +14,8 @@ Basic Alarm Bot example, sends a message after a set time.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
+import html
+import json
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Union, NoReturn
@@ -26,11 +28,10 @@ from stonks_bot import conf
 from stonks_bot.actions import bot_added_to_group
 from stonks_bot.discovery import Discovery
 from stonks_bot.helper.args import parse_symbol, parse_daily_perf_count
-from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error, \
-    restricted_group_command
+from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
-from stonks_bot.helper.formatters import formatter_conditional_no_dec
+from stonks_bot.helper.formatters import formatter_conditional_no_dec, formatter_to_json
 from stonks_bot.helper.handler import error_handler
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
@@ -72,7 +73,7 @@ def help(update: Update, context: CallbackContext) -> NoReturn:
     reply_message(update, reply)
 
 
-@restricted_command()
+@restricted_command(error_handler, 'Command execution forbidden (restricted access).')
 def help_admin(update: Update, context: CallbackContext) -> NoReturn:
     reply = """Hi admin, I am the STONKS BOT! You are allowed to use the following commands:
 * /stonk_clear | /sc -> Clears the watchlist.
@@ -128,16 +129,27 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
         stonks.pop(symbol, None)
         context.chat_data[conf.INTERNALS['stock']] = stonks
         msg_daily = get_daily_dict(context.chat_data)
-        msg_daily[conf.JOBS['check_rise_fall_day']['dict']['rise']].pop(symbol, None)
-        msg_daily[conf.JOBS['check_rise_fall_day']['dict']['fall']].pop(symbol, None)
-        reply = f'✅ Symbol *{symbol}* was removed\.'
+
+        rise = msg_daily.get(conf.JOBS['check_rise_fall_day']['dict']['rise'], factory_defaultdict())
+        fall = msg_daily.get(conf.JOBS['check_rise_fall_day']['dict']['fall'], factory_defaultdict())
+
+        if rise and  len(rise) > 0:
+            msg_daily[conf.JOBS['check_rise_fall_day']['dict']['rise']].pop(symbol, None)
+
+        if fall and len(fall) > 0:
+            msg_daily[conf.JOBS['check_rise_fall_day']['dict']['fall']].pop(symbol, None)
+
+        reply = f'✅ Symbol <b>{symbol}</b> was removed.'
     else:
-        reply = f'⚠️ Symbol *{symbol}* is not in watchlist\.'
+        reply = f'⚠️ Symbol <b>{symbol}</b> is not in watchlist.'
 
-    reply_message(update, reply, parse_mode=ParseMode.MARKDOWN_V2)
+    reply_message(update, reply, parse_mode=ParseMode.HTML)
 
 
-@restricted_group_command(error_handler, 'Execution of this command in a group chat is forbidden (restricted access).')
+
+
+@restricted_command(error_handler, 'Execution of this command in a group chat is forbidden (restricted access).',
+                    in_private=False)
 def stonk_clear(update: Update, context: CallbackContext) -> NoReturn:
     context.chat_data[conf.INTERNALS['stock']] = {}
     # clear_daily_dict(context.chat_data)
@@ -166,7 +178,7 @@ def all_stonk_clear(update: Update, context: CallbackContext) -> NoReturn:
 
 def clear_chat_data_stonk(chat_data: defaultdict) -> bool:
     stonks = chat_data.get(conf.INTERNALS['stock'], None)
-    daily = chat_data.get(conf.JOBS['check_rise_fall_day']['dict']['daily'], None)
+    daily = get_daily_dict(chat_data)
     cleared = False
 
     if stonks and len(stonks) > 0:
@@ -177,15 +189,17 @@ def clear_chat_data_stonk(chat_data: defaultdict) -> bool:
         rise = daily.get(conf.JOBS['check_rise_fall_day']['dict']['rise'], None)
         fall = daily.get(conf.JOBS['check_rise_fall_day']['dict']['fall'], None)
 
-        if rise and len(rise) > 0:
-            chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']][
-                conf.JOBS['check_rise_fall_day']['dict']['rise']] = factory_defaultdict()
-            cleared = True
+        if rise:
+            if len(rise) > 0:
+                chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']][
+                    conf.JOBS['check_rise_fall_day']['dict']['rise']] = factory_defaultdict()
+                cleared = True
 
-        if fall and len(fall) > 0:
-            chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']][
-                conf.JOBS['check_rise_fall_day']['dict']['fall']] = factory_defaultdict()
-            cleared = True
+        if fall:
+            if len(fall) > 0:
+                chat_data[conf.JOBS['check_rise_fall_day']['dict']['daily']][
+                    conf.JOBS['check_rise_fall_day']['dict']['fall']] = factory_defaultdict()
+                cleared = True
 
     return cleared
 
@@ -489,6 +503,29 @@ def exec_job_check_rise_fall(update: Update, context: CallbackContext):
     context.job_queue.run_once(check_rise_fall_day, timedelta(seconds=1), context=context)
 
 
+@restricted_command(error_handler, 'Command execution forbidden (restricted access).')
+def bot_list_all_data(update: Update, context: CallbackContext):
+    user_data = context.dispatcher.user_data
+    chat_data = context.dispatcher.chat_data
+    bot_data = context.dispatcher.bot_data
+    chat_ids = list(set(list(user_data.keys()) + list(chat_data.keys()) + list(bot_data.get(conf.INTERNALS['groups'], {}).keys())))
+    bot = context.bot
+    result = 'User Info:\n'
+
+    for c_id in chat_ids:
+        user_info = bot.get_chat(c_id).to_dict()
+        user_info.pop('photo', None)
+        user_info = html.escape(formatter_to_json(user_info))
+
+        result += f'{user_info}\n'
+
+    result += f'\nBot Data:\n{formatter_to_json(bot_data)}\n\n'
+    result += f'\nChat Data:\n{formatter_to_json(chat_data)}\n\n'
+    result += f'\nUser Data:\n{formatter_to_json(user_data)}'
+
+    reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
+
+
 def main():
     """Run bot."""
     persist = PicklePersistence(filename=f'{conf.PERSISTENCE_NAME}.pickle')
@@ -544,6 +581,8 @@ def main():
     dispatcher.add_handler(CommandHandler('ejcrf', exec_job_check_rise_fall))
     dispatcher.add_handler(CommandHandler('all_stonk_clear', all_stonk_clear))
     dispatcher.add_handler(CommandHandler('asc', all_stonk_clear))
+    dispatcher.add_handler(CommandHandler('bot_list_all_data', bot_list_all_data))
+    dispatcher.add_handler(CommandHandler('blad', bot_list_all_data))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)
