@@ -26,9 +26,9 @@ class PlotContext(object):
         text_pad = transform.transform((0, 30))[1] - transform.transform((0, 0))[1]
         high_low = []
         price_max = ohlc.Close.max()
-        idx_price_max = ohlc.Close.index.get_loc(ohlc.Close.idxmax())
+        idx_price_max = ohlc.Close.index.get_loc(ohlc.Close.idxmax()) + 1
         price_min = ohlc.Close.min()
-        idx_price_min = ohlc.Close.index.get_loc(ohlc.Close.idxmin())
+        idx_price_min = ohlc.Close.index.get_loc(ohlc.Close.idxmin()) + 1
         high_low.append({'idx': idx_price_max, 'max': price_max})
         high_low.append({'idx': idx_price_min, 'min': price_min})
 
