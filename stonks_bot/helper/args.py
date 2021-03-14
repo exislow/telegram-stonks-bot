@@ -6,17 +6,17 @@ from telegram import Update
 from stonks_bot.helper.message import reply_gif_wrong_arg_help, reply_gif_symbol_missing
 
 parser_symbol = ArgumentParser(description='Symbol to lookup.')
-parser_symbol.add_argument('symbol', nargs=1, type=str, help='What symbol do you want to lookup?')
+parser_symbol.add_argument('symbol', nargs='+', type=str, help='What symbol do you want to lookup?')
 
 
-def parse_symbol(update: Update, args: List[Any]) -> Union[bool, str]:
+def parse_symbol(update: Update, args: List[Any]) -> Union[List[Union[None, str]]]:
     try:
         args = parser_symbol.parse_args(args)
-        result = args.symbol[0]
+        result = args.symbol
     except:
         reply_gif_symbol_missing(update)
 
-        result = False
+        result = []
 
     return result
 

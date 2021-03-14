@@ -18,7 +18,7 @@ import html
 import json
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Union, NoReturn
+from typing import Union, NoReturn, List
 
 import pandas as pd
 from telegram import Update, ParseMode, Message, Chat, error
@@ -87,65 +87,66 @@ def help_admin(update: Update, context: CallbackContext) -> NoReturn:
 
 @check_symbol_limit
 def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
-    symbol = parse_symbol(update, context.args)
+    symbols = parse_symbol(update, context.args)
 
-    if not symbol:
+    if len(symbols) == 0:
         return False
 
-    s = False
+    for symbol in symbols:
+        s = False
 
-    try:
-        s = Stonk(symbol)
-    except InvalidSymbol:
-        reply_symbol_error(update, symbol)
+        try:
+            s = Stonk(symbol)
+        except InvalidSymbol:
+            reply_symbol_error(update, symbol)
 
-        return False
+            return False
 
-    stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
+        stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
 
-    if s.symbol not in stonks:
-        stonks[s.symbol] = s
-        context.chat_data[conf.INTERNALS['stock']] = stonks
+        if s.symbol not in stonks:
+            stonks[s.symbol] = s
+            context.chat_data[conf.INTERNALS['stock']] = stonks
 
-        reply = f"✅ {s.name} ({s.symbol}; ISIN: {s.isin}) added to watchlist."
-    else:
-        stonk_list(update, context)
-        reply_random_gif(update, 'boring')
+            reply = f"✅ {s.name} ({s.symbol}; ISIN: {s.isin}) added to watchlist."
+        else:
+            stonk_list(update, context)
+            reply_random_gif(update, 'boring')
 
-        reply = f"⚠️ {s.name} ({s.symbol}; ISIN: {s.isin}) is already in the watchlist."
+            reply = f"⚠️ {s.name} ({s.symbol}; ISIN: {s.isin}) is already in the watchlist."
 
-    reply_message(update, reply)
+        reply_message(update, reply)
 
 
 def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
-    symbol = parse_symbol(update, context.args)
+    symbols = parse_symbol(update, context.args)
 
-    if not symbol:
+    if len(symbols) == 0:
         return False
 
-    symbol: str = symbol.upper()
-    stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
+    for symbol in symbols:
+        symbol: str = symbol.upper()
+        stonks = context.chat_data.get(conf.INTERNALS['stock'], {})
 
-    if symbol in stonks:
-        stonks.pop(symbol, None)
-        context.chat_data[conf.INTERNALS['stock']] = stonks
-        msg_daily = get_daily_dict(context.chat_data)
+        if symbol in stonks:
+            stonks.pop(symbol, None)
+            context.chat_data[conf.INTERNALS['stock']] = stonks
+            msg_daily = get_daily_dict(context.chat_data)
 
-        rise = msg_daily.get(conf.JOBS['check_rise_fall_day']['dict']['rise'], factory_defaultdict())
-        fall = msg_daily.get(conf.JOBS['check_rise_fall_day']['dict']['fall'], factory_defaultdict())
+            rise = msg_daily.get(conf.JOBS['check_rise_fall_day']['dict']['rise'], factory_defaultdict())
+            fall = msg_daily.get(conf.JOBS['check_rise_fall_day']['dict']['fall'], factory_defaultdict())
 
-        if rise and  len(rise) > 0:
-            msg_daily[conf.JOBS['check_rise_fall_day']['dict']['rise']].pop(symbol, None)
+            if rise and  len(rise) > 0:
+                msg_daily[conf.JOBS['check_rise_fall_day']['dict']['rise']].pop(symbol, None)
 
-        if fall and len(fall) > 0:
-            msg_daily[conf.JOBS['check_rise_fall_day']['dict']['fall']].pop(symbol, None)
+            if fall and len(fall) > 0:
+                msg_daily[conf.JOBS['check_rise_fall_day']['dict']['fall']].pop(symbol, None)
 
-        reply = f'✅ Symbol <b>{symbol}</b> was removed.'
-    else:
-        reply = f'⚠️ Symbol <b>{symbol}</b> is not in watchlist.'
+            reply = f'✅ Symbol <b>{symbol}</b> was removed.'
+        else:
+            reply = f'⚠️ Symbol <b>{symbol}</b> is not in watchlist.'
 
-    reply_message(update, reply, parse_mode=ParseMode.HTML)
-
+        reply_message(update, reply, parse_mode=ParseMode.HTML)
 
 
 
@@ -172,9 +173,15 @@ def all_stonk_clear(update: Update, context: CallbackContext) -> NoReturn:
             cleared_chats.append(chat_id)
 
     for chat_id in cleared_chats:
-        reply = '🖤 Your watch list had to be purged due to maintenance reasons. ' \
-                'All symbols need to be re-added by you again. Sorry for inconvenience.'
-        send_message(context, chat_id, reply)
+        try:
+            reply = '🖤 Your watch list had to be purged due to maintenance reasons. ' \
+                    'All symbols need to be re-added by you again. Sorry for inconvenience.'
+            send_message(context, chat_id, reply)
+        except error.Unauthorized:
+            error_message = f'All stonk clear: User ID {chat_id} blocked our bot. Thus, this user was will ' \
+                            f'be removed from chat_data.'
+            error_handler(update, context, error_message)
+            global_chat_data.pop(chat_id, None)
 
 
 def clear_chat_data_stonk(chat_data: defaultdict) -> bool:
@@ -248,27 +255,28 @@ def list_price(update: Update, context: CallbackContext) -> NoReturn:
 
 
 @send_typing_action
-def chart(update: Update, context: CallbackContext, reply: bool = True, symbol: Union[bool, str] = False) -> Union[
+def chart(update: Update, context: CallbackContext, reply: bool = True, symbols: Union[bool, List[Union[None, str]]] = False) -> Union[
     None, bool]:
-    if not symbol:
-        symbol = parse_symbol(update, context.args)
+    if not symbols:
+        symbols = parse_symbol(update, context.args)
 
-    if not symbol:
+    if len(symbols) == 0:
         return False
 
-    try:
-        s = Stonk(symbol)
-    except InvalidSymbol:
-        reply_symbol_error(update, symbol)
+    for symbol in symbols:
+        try:
+            s = Stonk(symbol)
+        except InvalidSymbol:
+            reply_symbol_error(update, symbol)
 
-        return False
+            return False
 
-    c_buf = s.chart()
+        c_buf = s.chart()
 
-    if reply:
-        reply_with_photo(update, c_buf)
-    else:
-        send_photo(context, update.effective_message.chat_id, c_buf)
+        if reply:
+            reply_with_photo(update, c_buf)
+        else:
+            send_photo(context, update.effective_message.chat_id, c_buf)
 
 
 def check_rise_fall_day(context: CallbackContext) -> NoReturn:
@@ -317,7 +325,7 @@ def check_rise_fall_day(context: CallbackContext) -> NoReturn:
                 for message in to_send_message:
                     try:
                         send_message(context, c_id, message)
-                        chart(update_custom, context, reply=False, symbol=stonk.symbol)
+                        chart(update_custom, context, reply=False, symbols=[stonk.symbol])
                     except error.Unauthorized:
                         error_message = f'Rise/Fall check: User ID {c_id} blocked our bot. Thus, this user was will ' \
                                         f'be removed from chat_data.'
