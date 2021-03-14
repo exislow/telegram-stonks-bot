@@ -51,12 +51,12 @@ def start(update: Update, context: CallbackContext) -> NoReturn:
 
 def help(update: Update, context: CallbackContext) -> NoReturn:
     reply = """Hi ape, I am the STONKS BOT! Try to use the following commands:
-* /stonk_add <SYMBOL/ISIN> | /sa -> Add a stock to the watchlist.
-* /stonk_del <SYMBOL/ISIN> | /sd -> Delete a stock from the watchlist.
+* /stonk_add [<SYMBOLs/ISINs>] | /sa -> Add a stock to the watchlist.
+* /stonk_del [<SYMBOLs/ISINs>] | /sd -> Delete a stock from the watchlist.
 * /stonk_list | /sl -> Show the watchlist.
 * /stonk_clear | /sc -> Clears the watchlist (not allowed in group chats).
 * /list_price | /lp -> List watchlist prices.
-* /chart <SYMBOL> | /c -> Plot the last trading day of a stock.
+* /chart [<SYMBOLs/ISINs>] | /c -> Plot the last trading day of a stock.
 * /discovery | /d -> Useful infos to find hot stocks.
 * /sector_performance | /sp -> Show sector daily performance.
 * /upcoming_earnings | /ue -> Show upcoming earning dates.
@@ -80,6 +80,8 @@ def help_admin(update: Update, context: CallbackContext) -> NoReturn:
 * /stonk_clear | /sc -> Clears the watchlist.
 * /all_stonk_clear | /asc -> Clears the watchlist of every user.
 * /exec_job_check_rise_fall | /ejcrf -> Executes check_rise_fall immediately.
+* /all_stonk_clear | /asc -> Clears all stonk lists of all chats.
+* /bot_list_all_data | /blad -> Lists internal data storage.
 """
 
     reply_message(update, reply)
