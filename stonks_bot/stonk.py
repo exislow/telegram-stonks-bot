@@ -90,7 +90,7 @@ class Stonk(object):
             if yf_df.index.tzinfo is not None and yf_df.index.tzinfo.utcoffset(yf_df.index) is not None:
                 yf_df.index = yf_df.index.tz_convert(conf.LOCAL['tz'])
         except AttributeError as e:
-            raise Exception(yf_df).with_traceback(e.__traceback__)
+            raise Exception((yf_df, f'Symbol: {self.symbol}')).with_traceback(e.__traceback__)
 
         return yf_df
 

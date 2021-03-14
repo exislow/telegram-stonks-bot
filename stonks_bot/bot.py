@@ -36,6 +36,7 @@ from stonks_bot.helper.handler import error_handler
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
     reply_command_unknown, send_message, reply_random_gif
+from stonks_bot.sentiment import Sentiment
 from stonks_bot.stonk import Stonk
 
 
@@ -526,6 +527,13 @@ def bot_list_all_data(update: Update, context: CallbackContext):
     reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
 
 
+def wallstreetbets(update: Update, context: CallbackContext):
+    s = Sentiment()
+    a = s.wsb_community()
+
+    return a
+
+
 def main():
     """Run bot."""
     persist = PicklePersistence(filename=f'{conf.PERSISTENCE_NAME}.pickle')
@@ -583,6 +591,8 @@ def main():
     dispatcher.add_handler(CommandHandler('asc', all_stonk_clear))
     dispatcher.add_handler(CommandHandler('bot_list_all_data', bot_list_all_data))
     dispatcher.add_handler(CommandHandler('blad', bot_list_all_data))
+    dispatcher.add_handler(CommandHandler('wallstreetbets', wallstreetbets))
+    dispatcher.add_handler(CommandHandler('wsb', wallstreetbets))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)
