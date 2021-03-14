@@ -1,9 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import List, Union
 
+import pytz
+import pandas as pd
 from praw import Reddit
 
-from stonks_bot.config import Config
 from stonks_bot import conf
+from stonks_bot.config import Config
 
 
 class Sentiment(object):
@@ -23,82 +26,43 @@ class Sentiment(object):
 
         return client
 
-    def wsb_community(self):
+    def wallstreetbets(self, sort: str = 'hot', count: int = 15):
+        result = self.reddit('wallstreetbets', ['DD', 'News'], sort, count)
+
+        return result
+
+    def mauerstrassenwetten(self, sort: str = 'hot', count: int = 15):
+        result = self.reddit('mauerstrassenwetten', ['Information', 'Fällige Sorgfalt (DD)', 'Presse'], sort, count)
+
+        return result
+
+    def reddit(self, sub: str, flair: List[Union[str, None]], sort: str = 'hot', limit: int = 15) -> str:
         praw_api = self._get_reddit_client()
-
-        d_submission = {}
-        l_watchlist_links = list()
-
-
-        if False:
-            submissions = praw_api.subreddit('wallstreetbets').new(
-                    limit=15
-            )
-        else:
-            submissions = praw_api.subreddit('wallstreetbets').hot(
-                    limit=15
-            )
-
-        submissions = praw_api.subreddit('wallstreetbets').search('flair:dd', sort='hot')
+        submissions = praw_api.subreddit(sub).search(f"flair:{' OR '.join(flair)}", sort=sort, limit=limit)
+        columns = ['created_utc', 'subreddit', 'title', 'link', 'flair', 'score', 'comments_count',
+                   'upvote_ratio']
+        posts = []
 
         for s in submissions:
-            # Get more information about post using PRAW api
-
             # Ensure that the post hasn't been removed  by moderator in the meanwhile,
             # that there is a description and it's not just an image, that the flair is
             # meaningful, and that we aren't re-considering same author's watchlist
             if not s.removed_by_category:
-
-                l_watchlist_links.append(
-                        f'https://www.reddit.com{s.permalink}'
-                )
-
-                # Refactor data
-                s_datetime = datetime.utcfromtimestamp(
-                        s.created_utc
-                ).strftime('%d/%m/%Y %H:%M:%S')
-                s_link = f'https://www.reddit.com{s.permalink}'
-                s_all_awards = ''
-                for award in s.all_awardings:
-                    s_all_awards += f"{award['count']} {award['name']}\n"
-                s_all_awards = s_all_awards[:-2]
+                # Refactor date
+                datetime_creation = datetime.fromtimestamp(s.created_utc, tz=timezone.utc).astimezone(
+                    pytz.timezone('Europe/Berlin'))
+                print (datetime_creation)
+                link = f'https://www.reddit.com{s.permalink}'
 
                 # Create dictionary with data to construct dataframe allows to save data
-                d_submission[s.id] = {
-                    'created_utc': s_datetime,
-                    'subreddit': s.subreddit,
-                    'link_flair_text': s.link_flair_text,
-                    'title': s.title,
-                    'score': s.score,
-                    'link': s_link,
-                    'num_comments': s.num_comments,
-                    'upvote_ratio': s.upvote_ratio,
-                    'awards': s_all_awards,
-                }
+                posts.append([datetime_creation, s.subreddit, s.title, link, s.link_flair_text, s.score, s.num_comments,
+                              s.upvote_ratio])
 
-                # Print post data collected so far
-                print(f'{s_datetime} - {s.title}')
-                print(f'{s_link}')
-                # t_post = PrettyTable(
-                #         [
-                #             'Subreddit',
-                #             'Flair',
-                #             'Score',
-                #             '# Comments',
-                #             'Upvote %',
-                #             'Awards',
-                #         ]
-                # )
-                # t_post.add_row(
-                #         [
-                #             submission.subreddit,
-                #             submission.link_flair_text,
-                #             submission.score,
-                #             submission.num_comments,
-                #             f'{round(100*submission.upvote_ratio)}%',
-                #             s_all_awards,
-                #         ]
-                # )
-                # print(t_post)
-                # print('')
-        # Check if search_submissions didn't get anymore posts
+        df = pd.DataFrame(posts, columns=columns)
+        df = df.sort_values(by=columns[5], ascending=False)
+        result_html = ''
+
+        for idx, r in df.iterrows():
+            result_html += f"""* <a href="{r[columns[3]]}">{r[columns[2]]}</a>\n -> <b>{r[columns[4]]}</b>; Score: {r[columns[5]]}; # Com.: {r[columns[6]]}; UpV Ratio: {r[columns[-1]]}\n"""
+
+        return result_html

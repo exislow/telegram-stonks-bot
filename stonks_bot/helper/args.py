@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from typing import Union, List, Any
+from typing import Union, List, Any, Dict
 
 from telegram import Update
 
@@ -33,5 +33,27 @@ def parse_daily_perf_count(update: Update, args: List[Any]) -> int:
         reply_gif_wrong_arg_help(update)
 
         result = parser_daily_perf_count.get_default('count')
+
+    return result
+
+
+parser_redit = ArgumentParser(description='Daily performance count parser.')
+parser_redit.add_argument('sort', nargs='?', default='hot', type=str,
+                          choices=['hot', 'HOT', 'Hot', 'new', 'New', 'NEW', 'rising', 'Rising', 'RISING'],
+                          help='How to sort the posts?')
+parser_redit.add_argument('count', nargs='?', default=15, type=int, help='How many posts to show?')
+
+
+def parse_reddit(update: Update, args: List[Any]) -> Union[Dict, bool]:
+    try:
+        args = parser_redit.parse_args(args)
+        result = {
+            'sort': args.sort,
+            'count': args.count
+        }
+    except:
+        reply_gif_wrong_arg_help(update)
+
+        result = False
 
     return result

@@ -27,7 +27,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersist
 from stonks_bot import conf
 from stonks_bot.actions import bot_added_to_group
 from stonks_bot.discovery import Discovery
-from stonks_bot.helper.args import parse_symbol, parse_daily_perf_count
+from stonks_bot.helper.args import parse_symbol, parse_daily_perf_count, parse_reddit
 from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
@@ -538,10 +538,28 @@ def bot_list_all_data(update: Update, context: CallbackContext):
 
 
 def wallstreetbets(update: Update, context: CallbackContext):
-    s = Sentiment()
-    a = s.wsb_community()
+    args = parse_reddit(update, context.args)
 
-    return a
+    if not args:
+        return False
+
+    s = Sentiment()
+    result = s.wallstreetbets(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+def mauerstrassenwetten(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = Sentiment()
+    result = s.mauerstrassenwetten(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
 
 
 def main():
@@ -603,6 +621,8 @@ def main():
     dispatcher.add_handler(CommandHandler('blad', bot_list_all_data))
     dispatcher.add_handler(CommandHandler('wallstreetbets', wallstreetbets))
     dispatcher.add_handler(CommandHandler('wsb', wallstreetbets))
+    dispatcher.add_handler(CommandHandler('mauerstrassenwetten', mauerstrassenwetten))
+    dispatcher.add_handler(CommandHandler('msw', mauerstrassenwetten))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)
