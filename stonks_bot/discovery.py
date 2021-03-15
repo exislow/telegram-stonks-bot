@@ -63,10 +63,9 @@ class Discovery(object):
         ue = yec.earnings_between(date_from, date_to)
         pd_ue = pd.DataFrame(ue)
         pd_ue = pd_ue.drop_duplicates(subset=['ticker'])
-        result = pd_ue[
-            ['startdatetime', 'companyshortname', 'ticker']
-        ].to_string(header=False, index=False, formatters={'startdatetime': formatter_date,
-                                                           'companyshortname': '{:.15}'.format})
+        columns = ['startdatetime', 'companyshortname', 'ticker']
+        result = pd_ue[columns].to_string(header=False, index=False, formatters={columns[0]: formatter_date,
+                                                                                 columns[1]: '{:.15}'.format})
 
         return result
 

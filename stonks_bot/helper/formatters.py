@@ -27,7 +27,14 @@ def formatter_no_plus(text: str) -> str:
 
 def formatter_conditional_no_dec(val: Union[str, float]) -> str:
     val = float(val) if isinstance(val, str) else val
-    result = int(val) if val >= 100 or val <= -100 else val
+    if 1 > val > -1:
+        result = round(val, 4)
+    elif val >= 100 or val <= -100:
+        result = int(val)
+    elif isinstance(val, float):
+        result = round(val, 2)
+    else:
+        result = val
 
     return str(result)
 

@@ -51,12 +51,15 @@ def start(update: Update, context: CallbackContext) -> NoReturn:
 
 def help(update: Update, context: CallbackContext) -> NoReturn:
     reply = """Hi ape, I am the STONKS BOT! Try to use the following commands:
+Fundamental:
 * /stonk_add [<SYMBOLs/ISINs>] | /sa -> Add a stock to the watchlist.
 * /stonk_del [<SYMBOLs/ISINs>] | /sd -> Delete a stock from the watchlist.
 * /stonk_list | /sl -> Show the watchlist.
 * /stonk_clear | /sc -> Clears the watchlist (not allowed in group chats).
 * /list_price | /lp -> List watchlist prices.
 * /chart [<SYMBOLs/ISINs>] | /c -> Plot the last trading day of a stock.
+
+Discovery:
 * /discovery | /d -> Useful infos to find hot stocks.
 * /sector_performance | /sp -> Show sector daily performance.
 * /upcoming_earnings | /ue -> Show upcoming earning dates.
@@ -69,6 +72,9 @@ def help(update: Update, context: CallbackContext) -> NoReturn:
 * /hot_penny (<count>) | /hp -> Show hot penny stonks.
 * /underval_large (<count>) | /ul -> Show undervalued large cap stonks.
 * /underval_growth (<count>) | /ug -> Show undervalued growth stonks.
+
+Sentiment:
+*
 """
 
     reply_message(update, reply)
@@ -537,29 +543,156 @@ def bot_list_all_data(update: Update, context: CallbackContext):
     reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
 
 
+@send_typing_action
 def wallstreetbets(update: Update, context: CallbackContext):
     args = parse_reddit(update, context.args)
 
     if not args:
         return False
 
-    s = Sentiment()
+    s = Sentiment(context, update)
     result = s.wallstreetbets(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
 
 
+@send_typing_action
 def mauerstrassenwetten(update: Update, context: CallbackContext):
     args = parse_reddit(update, context.args)
 
     if not args:
         return False
 
-    s = Sentiment()
+    s = Sentiment(context, update)
     result = s.mauerstrassenwetten(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
 
+
+@send_typing_action
+def investing(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = Sentiment(context, update)
+    result = s.investing(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def stocks(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = Sentiment(context, update)
+    result = s.stocks(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def gamestop(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = Sentiment(context, update)
+    result = s.gamestop(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def spielstopp(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = Sentiment(context, update)
+    result = s.spielstopp(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def stockmarket(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = Sentiment(context, update)
+    result = s.stockmarket(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def daytrading(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = Sentiment(context, update)
+    result = s.daytrading(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def pennystocks(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = Sentiment(context, update)
+    result = s.pennystocks(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def cryptomarkets(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = Sentiment(context, update)
+    result = s.cryptomarkets(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def satoshistreetbets(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = Sentiment(context, update)
+    result = s.satoshistreetbets(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def popular_tickers(update: Update, context: CallbackContext):
+    s = Sentiment(context, update)
+    text = s.reddit_popular_tickers()
+    result = f"💁 💁 💁 ({conf.LOCAL['currency']})\n\n{text}"
+
+    reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
 
 
 def main():
@@ -617,12 +750,32 @@ def main():
     dispatcher.add_handler(CommandHandler('ejcrf', exec_job_check_rise_fall))
     dispatcher.add_handler(CommandHandler('all_stonk_clear', all_stonk_clear))
     dispatcher.add_handler(CommandHandler('asc', all_stonk_clear))
-    dispatcher.add_handler(CommandHandler('bot_list_all_data', bot_list_all_data))
-    dispatcher.add_handler(CommandHandler('blad', bot_list_all_data))
-    dispatcher.add_handler(CommandHandler('wallstreetbets', wallstreetbets))
-    dispatcher.add_handler(CommandHandler('wsb', wallstreetbets))
-    dispatcher.add_handler(CommandHandler('mauerstrassenwetten', mauerstrassenwetten))
-    dispatcher.add_handler(CommandHandler('msw', mauerstrassenwetten))
+    dispatcher.add_handler(CommandHandler('bot_list_all_data', bot_list_all_data, run_async=True))
+    dispatcher.add_handler(CommandHandler('blad', bot_list_all_data, run_async=True))
+    dispatcher.add_handler(CommandHandler('wallstreetbets', wallstreetbets, run_async=True))
+    dispatcher.add_handler(CommandHandler('wsb', wallstreetbets, run_async=True))
+    dispatcher.add_handler(CommandHandler('mauerstrassenwetten', mauerstrassenwetten, run_async=True))
+    dispatcher.add_handler(CommandHandler('msw', mauerstrassenwetten, run_async=True))
+    dispatcher.add_handler(CommandHandler('investing', investing, run_async=True))
+    dispatcher.add_handler(CommandHandler('ri', investing, run_async=True))
+    dispatcher.add_handler(CommandHandler('rstocks', stocks, run_async=True))
+    dispatcher.add_handler(CommandHandler('rs', stocks, run_async=True))
+    dispatcher.add_handler(CommandHandler('gamestop', gamestop, run_async=True))
+    dispatcher.add_handler(CommandHandler('gme', gamestop, run_async=True))
+    dispatcher.add_handler(CommandHandler('spielstopp', spielstopp, run_async=True))
+    dispatcher.add_handler(CommandHandler('rss', spielstopp, run_async=True))
+    dispatcher.add_handler(CommandHandler('stockmarket', stockmarket, run_async=True))
+    dispatcher.add_handler(CommandHandler('rsm', stockmarket, run_async=True))
+    dispatcher.add_handler(CommandHandler('daytrading', daytrading, run_async=True))
+    dispatcher.add_handler(CommandHandler('rdt', daytrading, run_async=True))
+    dispatcher.add_handler(CommandHandler('pennystocks', pennystocks, run_async=True))
+    dispatcher.add_handler(CommandHandler('rps', pennystocks, run_async=True))
+    dispatcher.add_handler(CommandHandler('cryptomarkets', cryptomarkets, run_async=True))
+    dispatcher.add_handler(CommandHandler('rcm', cryptomarkets, run_async=True))
+    dispatcher.add_handler(CommandHandler('satoshistreetbets', satoshistreetbets, run_async=True))
+    dispatcher.add_handler(CommandHandler('ssb', satoshistreetbets, run_async=True))
+    dispatcher.add_handler(CommandHandler('popular_tickers', popular_tickers, run_async=True))
+    dispatcher.add_handler(CommandHandler('pt', popular_tickers, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)
