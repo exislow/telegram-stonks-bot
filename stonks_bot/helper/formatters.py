@@ -58,6 +58,18 @@ def formatter_to_json(val: Any) -> str:
     return json.dumps(val, indent=2, ensure_ascii=False, cls=TelegramEncoder)
 
 
+def formatter_to_percent(val: float) -> str:
+    result = val * 100
+    result = formatter_conditional_no_dec(result)
+
+    return result
+
+
+def formatter_brackets(val: Union[str, int, float]) -> str:
+    return f'({val})'
+
+
 class TelegramEncoder(JSONEncoder):
     def default(self, o):
         return o.to_dict()
+

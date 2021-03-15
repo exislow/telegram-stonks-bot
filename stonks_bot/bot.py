@@ -15,7 +15,6 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 import html
-import json
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Union, NoReturn, List
@@ -27,7 +26,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersist
 from stonks_bot import conf
 from stonks_bot.actions import bot_added_to_group
 from stonks_bot.discovery import Discovery
-from stonks_bot.helper.args import parse_symbol, parse_daily_perf_count, parse_reddit
+from stonks_bot.helper.args import parse_symbols, parse_daily_perf_count, parse_reddit
 from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
@@ -36,7 +35,8 @@ from stonks_bot.helper.handler import error_handler
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
     reply_command_unknown, send_message, reply_random_gif
-from stonks_bot.sentiment import Sentiment
+from stonks_bot.sentiment.reddit import Reddit
+from stonks_bot.sentiment.stocktwits import Stocktwits
 from stonks_bot.stonk import Stonk
 
 
@@ -95,7 +95,7 @@ def help_admin(update: Update, context: CallbackContext) -> NoReturn:
 
 @check_symbol_limit
 def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
-    symbols = parse_symbol(update, context.args)
+    symbols = parse_symbols(update, context.args)
 
     if len(symbols) == 0:
         return False
@@ -127,7 +127,7 @@ def stonk_add(update: Update, context: CallbackContext) -> Union[None, bool]:
 
 
 def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
-    symbols = parse_symbol(update, context.args)
+    symbols = parse_symbols(update, context.args)
 
     if len(symbols) == 0:
         return False
@@ -266,7 +266,7 @@ def list_price(update: Update, context: CallbackContext) -> NoReturn:
 def chart(update: Update, context: CallbackContext, reply: bool = True, symbols: Union[bool, List[Union[None, str]]] = False) -> Union[
     None, bool]:
     if not symbols:
-        symbols = parse_symbol(update, context.args)
+        symbols = parse_symbols(update, context.args)
 
     if len(symbols) == 0:
         return False
@@ -550,7 +550,7 @@ def wallstreetbets(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.wallstreetbets(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -563,7 +563,7 @@ def mauerstrassenwetten(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.mauerstrassenwetten(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -576,7 +576,7 @@ def investing(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.investing(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -589,7 +589,7 @@ def stocks(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.stocks(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -602,7 +602,7 @@ def gamestop(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.gamestop(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -615,7 +615,7 @@ def spielstopp(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.spielstopp(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -628,7 +628,7 @@ def stockmarket(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.stockmarket(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -641,7 +641,7 @@ def daytrading(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.daytrading(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -654,7 +654,7 @@ def pennystocks(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.pennystocks(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -667,7 +667,7 @@ def cryptomarkets(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.cryptomarkets(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -680,7 +680,7 @@ def satoshistreetbets(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Sentiment(context, update)
+    s = Reddit(context, update)
     result = s.satoshistreetbets(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -688,9 +688,18 @@ def satoshistreetbets(update: Update, context: CallbackContext):
 
 @send_typing_action
 def popular_tickers(update: Update, context: CallbackContext):
-    s = Sentiment(context, update)
-    text = s.reddit_popular_tickers()
+    s = Reddit(context, update)
+    text = s.popular_tickers()
     result = f"💁 💁 💁 ({conf.LOCAL['currency']})\n\n{text}"
+
+    reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
+
+
+@send_typing_action
+def bullbear(update: Update, context: CallbackContext):
+    symbols = parse_symbols(update, context.args)
+    st = Stocktwits()
+    result = st.bullbear(symbols)
 
     reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
 
@@ -776,6 +785,8 @@ def main():
     dispatcher.add_handler(CommandHandler('ssb', satoshistreetbets, run_async=True))
     dispatcher.add_handler(CommandHandler('popular_tickers', popular_tickers, run_async=True))
     dispatcher.add_handler(CommandHandler('pt', popular_tickers, run_async=True))
+    dispatcher.add_handler(CommandHandler('bullbear', bullbear, run_async=True))
+    dispatcher.add_handler(CommandHandler('bb', bullbear, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)

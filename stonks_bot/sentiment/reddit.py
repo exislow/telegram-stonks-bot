@@ -19,7 +19,7 @@ from stonks_bot.helper.formatters import formatter_round_currency_scalar, format
 from stonks_bot.helper.message import reply_message, reply_random_gif
 
 
-class Sentiment(object):
+class Reddit(object):
     conf: Config = None
     context: CallbackContext = None
     update: Update = None
@@ -45,64 +45,64 @@ class Sentiment(object):
         return client
 
     def wallstreetbets(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('wallstreetbets', ['DD', 'News'], sort, count)
+        result = self._posts('wallstreetbets', ['DD', 'News'], sort, count)
 
         return result
 
     def mauerstrassenwetten(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('mauerstrassenwetten', ['Information', '"Fällige Sorgfalt (DD)"', 'Presse'], sort,
-                                   count)
+        result = self._posts('mauerstrassenwetten', ['Information', '"Fällige Sorgfalt (DD)"', 'Presse'], sort,
+                             count)
 
         return result
 
     def investing(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('investing', [], sort, count)
+        result = self._posts('investing', [], sort, count)
 
         return result
 
     def stocks(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('stocks', ['Advice', 'Resources', '"Company Analysis"', '"Industry News"'], sort, count)
+        result = self._posts('stocks', ['Advice', 'Resources', '"Company Analysis"', '"Industry News"'], sort, count)
 
         return result
 
     def gamestop(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('gamestop', [], sort,
-                                   count)
+        result = self._posts('gamestop', [], sort,
+                             count)
 
         return result
 
     def spielstopp(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('spielstopp', ['DD', 'Diskussion'], sort, count)
+        result = self._posts('spielstopp', ['DD', 'Diskussion'], sort, count)
 
         return result
 
     def stockmarket(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('StockMarket', ['News', '"Technical Analysis"', '"Fundamentals/DD"', 'Crypto',
+        result = self._posts('StockMarket', ['News', '"Technical Analysis"', '"Fundamentals/DD"', 'Crypto',
                                                    '"Education/Lessons Learned"'], sort, count)
 
         return result
 
     def daytrading(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('Daytrading', [], sort, count)
+        result = self._posts('Daytrading', [], sort, count)
 
         return result
 
     def pennystocks(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('pennystocks', ['"Stock Info"', 'DD', '"Tip & Tricks"'], sort, count)
+        result = self._posts('pennystocks', ['"Stock Info"', 'DD', '"Tip & Tricks"'], sort, count)
 
         return result
 
     def cryptomarkets(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('CryptoMarkets', ['NEWS', '"NEW COIN"', 'TECHNICALS', 'WARNING'], sort, count)
+        result = self._posts('CryptoMarkets', ['NEWS', '"NEW COIN"', 'TECHNICALS', 'WARNING'], sort, count)
 
         return result
 
     def satoshistreetbets(self, sort: str = 'hot', count: int = 15):
-        result = self.reddit_posts('SatoshiStreetBets', ['Moonshot', 'Fundamentals', 'Discussion'], sort, count)
+        result = self._posts('SatoshiStreetBets', ['Moonshot', 'Fundamentals', 'Discussion'], sort, count)
 
         return result
 
-    def reddit_posts(self, sub: str, flair: List[Union[str, None]], sort: str = 'hot', limit: int = 15) -> str:
+    def _posts(self, sub: str, flair: List[Union[str, None]], sort: str = 'hot', limit: int = 15) -> str:
         praw_api = self._get_reddit_client()
         flair_str = 'flair:'
         flair_str += f"({' OR '.join(flair)})" if len(flair) > 0 else '(NOT asdfghdfdafsgdhfffdsgh)' # Something never occurse
@@ -135,7 +135,7 @@ class Sentiment(object):
 
         return result_html
 
-    def reddit_popular_tickers(self, days: int = 1, limit: int = 30, convert_currency: bool = True) -> str:
+    def popular_tickers(self, days: int = 1, limit: int = 30, convert_currency: bool = True) -> str:
         subs = ['pennystocks', 'Daytrading', 'StockMarket', 'stocks', 'investing', 'wallstreetbets',
                 'mauerstrassenwetten']
         columns = ['Company', 'Symbol', 'Mentions', 'Price', '% 1mo.', 'Earnings Date', 'Earnings Days Left']
@@ -153,7 +153,7 @@ class Sentiment(object):
                     t = praw_api.submission(id=c.id)
 
                     if not t.removed_by_category and (t.selftext or t.title):
-                        tickers += self.find_tickers(t)
+                        tickers += self._find_tickers(t)
                 except Exception as e:
                     # TODO: If HTTP 5xx save datetime to bot_data and do not execute for x minutes.
                     msg = '💔 The remote data source is having issues or has blocked me. Try again MUCH later.'
@@ -217,7 +217,7 @@ class Sentiment(object):
 
         return result
 
-    def find_tickers(self, submission: Submission) -> List[str]:
+    def _find_tickers(self, submission: Submission) -> List[str]:
         tickers = list()
         text_extracted = list()
         text_extracted.append(submission.selftext)
@@ -233,3 +233,6 @@ class Sentiment(object):
                 tickers.append(''.join(ticker).strip())
 
         return tickers
+
+    def a(self):
+        pass
