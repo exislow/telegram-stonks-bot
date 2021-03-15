@@ -698,8 +698,36 @@ def popular_tickers(update: Update, context: CallbackContext):
 @send_typing_action
 def bullbear(update: Update, context: CallbackContext):
     symbols = parse_symbols(update, context.args)
+
+    if len(symbols) == 0:
+        return False
+
     st = Stocktwits()
-    result = st.bullbear(symbols)
+    text = st.bullbear(symbols)
+    result = f'🐣 Stocktwits Analysis 🔍\n\n{text}'
+
+    reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
+
+
+@send_typing_action
+def stock_messages(update: Update, context: CallbackContext):
+    symbols = parse_symbols(update, context.args)
+
+    if len(symbols) == 0:
+        return False
+
+    st = Stocktwits()
+    text = st.messages_ticker(symbols)
+    result = f'🐣 Stocktwits Messages 💬\n\n{text}'
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
+@send_typing_action
+def stock_trending(update: Update, context: CallbackContext):
+    st = Stocktwits()
+    text = st.trending()
+    result = f'🐣 Stocktwits Trending 🚀\n\n{text}'
 
     reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
 
@@ -787,6 +815,10 @@ def main():
     dispatcher.add_handler(CommandHandler('pt', popular_tickers, run_async=True))
     dispatcher.add_handler(CommandHandler('bullbear', bullbear, run_async=True))
     dispatcher.add_handler(CommandHandler('bb', bullbear, run_async=True))
+    dispatcher.add_handler(CommandHandler('stock_messages', stock_messages, run_async=True))
+    dispatcher.add_handler(CommandHandler('sm', stock_messages, run_async=True))
+    dispatcher.add_handler(CommandHandler('stock_trending', stock_trending, run_async=True))
+    dispatcher.add_handler(CommandHandler('st', stock_trending, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)
