@@ -19,7 +19,7 @@ from stonks_bot.helper.formatters import formatter_round_currency_scalar, format
 from stonks_bot.helper.message import reply_message, reply_random_gif
 
 
-class Reddit(object):
+class RedditAnalysis(object):
     conf: Config = None
     context: CallbackContext = None
     update: Update = None

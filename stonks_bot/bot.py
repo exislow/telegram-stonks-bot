@@ -35,7 +35,7 @@ from stonks_bot.helper.handler import error_handler
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
     reply_command_unknown, send_message, reply_random_gif
-from stonks_bot.sentiment.reddit import Reddit
+from stonks_bot.sentiment.redditanalysis import RedditAnalysis
 from stonks_bot.sentiment.stocktwits import Stocktwits
 from stonks_bot.stonk import Stonk
 
@@ -74,22 +74,21 @@ Discovery:
 * /underval_growth (<count>) | /ug -> Show undervalued growth stonks.
 
 Sentiment:
-* /wallstreetbets (<sort={hot, rising, new}> <count>) | /wsb -> Show relevant r/ posts.
-* /mauerstrassenwetten (<sort={hot, rising, new}> <count>) | /msw -> Zeige relevante r/mauerstrassenwetten Einträge.
-* /investing (<sort={hot, rising, new}> <count>) | /ri -> Show relevant r/investing posts.
-* /rstocks (<sort={hot, rising, new}> <count>) | /rs -> Show relevant r/stocks posts.
-* /gamestop (<sort={hot, rising, new}> <count>) | /gme -> Show relevant r/ posts.
-* /spielstopp (<sort={hot, rising, new}> <count>) | /rss -> Show relevant r/ posts.
-* /stockmarket (<sort={hot, rising, new}> <count>) | /rsm -> Show relevant r/ posts.
-* /daytrading (<sort={hot, rising, new}> <count>) | /rdt -> Show relevant r/ posts.
-* /pennystocks (<sort={hot, rising, new}> <count>) | /rps -> Show relevant r/ posts.
-* /cryptomarkets (<sort={hot, rising, new}> <count>) | /rcm -> Show relevant r/ posts.
-* /satoshistreetbets (<sort={hot, rising, new}> <count>) | /ssb -> Show relevant r/ posts.
-* /popular_symbols (<sort={hot, rising, new}> <count>) | /ps -> Show popular symbols from Reddit.
+* /wallstreetbets (<sort={hot, rising, new} count>) | /wsb -> Show relevant r/ posts.
+* /mauerstrassenwetten (<sort={hot, rising, new} count>) | /msw -> Zeige relevante r/mauerstrassenwetten Einträge.
+* /investing (<sort={hot, rising, new} count>) | /ri -> Show relevant r/investing posts.
+* /rstocks (<sort={hot, rising, new} count>) | /rs -> Show relevant r/stocks posts.
+* /gamestop (<sort={hot, rising, new} count>) | /gme -> Show relevant r/ posts.
+* /spielstopp (<sort={hot, rising, new} count>) | /rss -> Show relevant r/ posts.
+* /stockmarket (<sort={hot, rising, new} count>) | /rsm -> Show relevant r/ posts.
+* /daytrading (<sort={hot, rising, new} count>) | /rdt -> Show relevant r/ posts.
+* /pennystocks (<sort={hot, rising, new} count>) | /rps -> Show relevant r/ posts.
+* /cryptomarkets (<sort={hot, rising, new} count>) | /rcm -> Show relevant r/ posts.
+* /satoshistreetbets (<sort={hot, rising, new} count>) | /ssb -> Show relevant r/ posts.
+* /popular_symbols (<sort={hot, rising, new} count>) | /ps -> Show popular symbols from Reddit.
 * /bullbear [<SYMBOLs] | /bb -> Bull / Bear analysis for chosen symbols.
 * /stock_messages [<SYMBOLs] | /sm -> Get the latest TwitStock messages for chosen symbols.
 * /trending_symbols | /ts -> Get the latest trending symbols from TwitStock.
-*
 """
 
     reply_message(update, reply)
@@ -566,7 +565,7 @@ def wallstreetbets(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.wallstreetbets(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -579,7 +578,7 @@ def mauerstrassenwetten(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.mauerstrassenwetten(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -592,7 +591,7 @@ def investing(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.investing(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -605,7 +604,7 @@ def stocks(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.stocks(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -618,7 +617,7 @@ def gamestop(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.gamestop(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -631,7 +630,7 @@ def spielstopp(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.spielstopp(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -644,7 +643,7 @@ def stockmarket(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.stockmarket(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -657,7 +656,7 @@ def daytrading(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.daytrading(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -670,7 +669,7 @@ def pennystocks(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.pennystocks(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -683,7 +682,7 @@ def cryptomarkets(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.cryptomarkets(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -696,7 +695,7 @@ def satoshistreetbets(update: Update, context: CallbackContext):
     if not args:
         return False
 
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     result = s.satoshistreetbets(args['sort'], args['count'])
 
     reply_message(update, result, parse_mode=ParseMode.HTML)
@@ -704,7 +703,7 @@ def satoshistreetbets(update: Update, context: CallbackContext):
 
 @send_typing_action
 def popular_symbols(update: Update, context: CallbackContext):
-    s = Reddit(context, update)
+    s = RedditAnalysis(context, update)
     text = s.popular_symbols()
     result = f"💁 💁 💁 ({conf.LOCAL['currency']})\n\n{text}"
 
