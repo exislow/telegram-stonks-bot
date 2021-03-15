@@ -135,7 +135,7 @@ class Reddit(object):
 
         return result_html
 
-    def popular_tickers(self, days: int = 1, limit: int = 30, convert_currency: bool = True) -> str:
+    def popular_symbols(self, days: int = 1, limit: int = 30, convert_currency: bool = True) -> str:
         subs = ['pennystocks', 'Daytrading', 'StockMarket', 'stocks', 'investing', 'wallstreetbets',
                 'mauerstrassenwetten']
         columns = ['Company', 'Symbol', 'Mentions', 'Price', '% 1mo.', 'Earnings Date', 'Earnings Days Left']

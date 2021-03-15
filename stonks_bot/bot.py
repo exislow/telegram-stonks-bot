@@ -74,6 +74,21 @@ Discovery:
 * /underval_growth (<count>) | /ug -> Show undervalued growth stonks.
 
 Sentiment:
+* /wallstreetbets (<sort={hot, rising, new}> <count>) | /wsb -> Show relevant r/ posts.
+* /mauerstrassenwetten (<sort={hot, rising, new}> <count>) | /msw -> Zeige relevante r/mauerstrassenwetten Einträge.
+* /investing (<sort={hot, rising, new}> <count>) | /ri -> Show relevant r/investing posts.
+* /rstocks (<sort={hot, rising, new}> <count>) | /rs -> Show relevant r/stocks posts.
+* /gamestop (<sort={hot, rising, new}> <count>) | /gme -> Show relevant r/ posts.
+* /spielstopp (<sort={hot, rising, new}> <count>) | /rss -> Show relevant r/ posts.
+* /stockmarket (<sort={hot, rising, new}> <count>) | /rsm -> Show relevant r/ posts.
+* /daytrading (<sort={hot, rising, new}> <count>) | /rdt -> Show relevant r/ posts.
+* /pennystocks (<sort={hot, rising, new}> <count>) | /rps -> Show relevant r/ posts.
+* /cryptomarkets (<sort={hot, rising, new}> <count>) | /rcm -> Show relevant r/ posts.
+* /satoshistreetbets (<sort={hot, rising, new}> <count>) | /ssb -> Show relevant r/ posts.
+* /popular_symbols (<sort={hot, rising, new}> <count>) | /ps -> Show popular symbols from Reddit.
+* /bullbear [<SYMBOLs] | /bb -> Bull / Bear analysis for chosen symbols.
+* /stock_messages [<SYMBOLs] | /sm -> Get the latest TwitStock messages for chosen symbols.
+* /trending_symbols | /ts -> Get the latest trending symbols from TwitStock.
 *
 """
 
@@ -687,9 +702,9 @@ def satoshistreetbets(update: Update, context: CallbackContext):
 
 
 @send_typing_action
-def popular_tickers(update: Update, context: CallbackContext):
+def popular_symbols(update: Update, context: CallbackContext):
     s = Reddit(context, update)
-    text = s.popular_tickers()
+    text = s.popular_symbols()
     result = f"💁 💁 💁 ({conf.LOCAL['currency']})\n\n{text}"
 
     reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
@@ -724,7 +739,7 @@ def stock_messages(update: Update, context: CallbackContext):
 
 
 @send_typing_action
-def stock_trending(update: Update, context: CallbackContext):
+def trending_symbols(update: Update, context: CallbackContext):
     st = Stocktwits()
     text = st.trending()
     result = f'🐣 Stocktwits Trending 🚀\n\n{text}'
@@ -811,14 +826,14 @@ def main():
     dispatcher.add_handler(CommandHandler('rcm', cryptomarkets, run_async=True))
     dispatcher.add_handler(CommandHandler('satoshistreetbets', satoshistreetbets, run_async=True))
     dispatcher.add_handler(CommandHandler('ssb', satoshistreetbets, run_async=True))
-    dispatcher.add_handler(CommandHandler('popular_tickers', popular_tickers, run_async=True))
-    dispatcher.add_handler(CommandHandler('pt', popular_tickers, run_async=True))
+    dispatcher.add_handler(CommandHandler('popular_symbols', popular_symbols, run_async=True))
+    dispatcher.add_handler(CommandHandler('ps', popular_symbols, run_async=True))
     dispatcher.add_handler(CommandHandler('bullbear', bullbear, run_async=True))
     dispatcher.add_handler(CommandHandler('bb', bullbear, run_async=True))
     dispatcher.add_handler(CommandHandler('stock_messages', stock_messages, run_async=True))
     dispatcher.add_handler(CommandHandler('sm', stock_messages, run_async=True))
-    dispatcher.add_handler(CommandHandler('stock_trending', stock_trending, run_async=True))
-    dispatcher.add_handler(CommandHandler('st', stock_trending, run_async=True))
+    dispatcher.add_handler(CommandHandler('trending_symbols', trending_symbols, run_async=True))
+    dispatcher.add_handler(CommandHandler('ts', trending_symbols, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)
