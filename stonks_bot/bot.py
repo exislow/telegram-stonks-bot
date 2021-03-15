@@ -159,7 +159,7 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
             rise = msg_daily.get(conf.JOBS['check_rise_fall_day']['dict']['rise'], factory_defaultdict())
             fall = msg_daily.get(conf.JOBS['check_rise_fall_day']['dict']['fall'], factory_defaultdict())
 
-            if rise and  len(rise) > 0:
+            if rise and len(rise) > 0:
                 msg_daily[conf.JOBS['check_rise_fall_day']['dict']['rise']].pop(symbol, None)
 
             if fall and len(fall) > 0:
@@ -170,7 +170,6 @@ def stonk_del(update: Update, context: CallbackContext) -> Union[None, bool]:
             reply = f'⚠️ Symbol <b>{symbol}</b> is not in watchlist.'
 
         reply_message(update, reply, parse_mode=ParseMode.HTML)
-
 
 
 @restricted_command(error_handler, 'Execution of this command in a group chat is forbidden (restricted access).',
@@ -278,7 +277,8 @@ def list_price(update: Update, context: CallbackContext) -> NoReturn:
 
 
 @send_typing_action
-def chart(update: Update, context: CallbackContext, reply: bool = True, symbols: Union[bool, List[Union[None, str]]] = False) -> Union[
+def chart(update: Update, context: CallbackContext, reply: bool = True,
+          symbols: Union[bool, List[Union[None, str]]] = False) -> Union[
     None, bool]:
     if not symbols:
         symbols = parse_symbols(update, context.args)
@@ -540,7 +540,8 @@ def bot_list_all_data(update: Update, context: CallbackContext):
     user_data = context.dispatcher.user_data
     chat_data = context.dispatcher.chat_data
     bot_data = context.dispatcher.bot_data
-    chat_ids = list(set(list(user_data.keys()) + list(chat_data.keys()) + list(bot_data.get(conf.INTERNALS['groups'], {}).keys())))
+    chat_ids = list(
+        set(list(user_data.keys()) + list(chat_data.keys()) + list(bot_data.get(conf.INTERNALS['groups'], {}).keys())))
     bot = context.bot
     result = 'User Info:\n'
 
