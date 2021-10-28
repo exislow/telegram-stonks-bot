@@ -1,5 +1,6 @@
 python-telegram-bot==13.2
-yfinance==0.1.55
+yfinance==0.1.64
+#https://github.com/ranaroussi/yfinance.git#egg=yfinance
 matplotlib==3.3.4
 mplfinance==0.12.7a5
 requests==2.25.1

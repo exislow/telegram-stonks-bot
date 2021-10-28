@@ -25,6 +25,21 @@ class Stonk(object):
     daily_fall: Performance = Performance()
 
     def __init__(self, symbol: str) -> None:
+        # Set global requests settings
+        header = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:93.0) Gecko/20100101 Firefox/93.0',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept': 'application/json,text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US;q=0.7,en;q=0.3',
+            'Dnt': '1',
+            #'Host': 'https://query2.finance.yahoo.com',
+            'Referer': 'https://query2.finance.yahoo.com',
+            'Te': 'trailers',
+            'Sec-Fetch-Dest': 'document'
+        }
+        self._req_session = requests.Session()
+        self._req_session.headers.update(header)
+
         self._symbol_validate(symbol)
 
         if self.is_valid:
@@ -70,7 +85,7 @@ class Stonk(object):
     def _symbol_search(self, needle: str) -> Union[str, bool]:
         url = "https://query2.finance.yahoo.com/v1/finance/search"
         params = {'q': needle, 'quotesCount': 1, 'newsCount': 0}
-        r = requests.get(url, params=params)
+        r = self._req_session.get(url, params=params)
         data = r.json()
 
         symbol = False
