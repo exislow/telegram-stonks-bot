@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+from dataclasses_json import dataclass_json
 from datetime import datetime
 
 
+@dataclass_json
 @dataclass
 class CurrencyExchange:
     symbol: str
