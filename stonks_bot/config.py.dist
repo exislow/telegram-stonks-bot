@@ -32,7 +32,8 @@ class Config(object):
             'username': '<USERNAME>',
             'user_agent': '<ANY USER AGENT STRING>',
             'password': '<USER PASSWORD>'
-        }
+        },
+        'giphy_key': '<GIPHY API KEY>'
     }
 
     OHLC = {
@@ -54,6 +55,10 @@ class Config(object):
 
     INTERNALS = {
         'groups': 'groups',
+        'users': 'users',
+        'channels': 'channels',
+        'data': 'data',
+        'cause_user': 'cause_user',
         'stock': 'stonks'
     }
 
