@@ -1,12 +1,13 @@
 import giphy_client
 from giphy_client import InlineResponse2002
 from giphy_client.rest import ApiException
+from stonks_bot import conf
 
 
 def gif_random(search_term: str) -> InlineResponse2002:
     # create an instance of the API class
     api_instance = giphy_client.DefaultApi()
-    api_key = 'ni2nGePDV3EGTmAFw45yPrVJEvOQ5Pm1'  # str | Giphy API Key.
+    api_key = conf.API['giphy_key']  # str | Giphy API Key.
     rating = 'r'  # str | Filters results by specified rating. (optional)
     fmt = 'json'  # str | Used to indicate the expected response format. Default is Json. (optional) (default to json)
     api_response = False
