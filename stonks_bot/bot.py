@@ -15,29 +15,39 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 import html
+import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Union, NoReturn, List
 
 import pandas as pd
-from telegram import Update, ParseMode, Message, Chat, error
-from telegram.ext import Updater, CommandHandler, CallbackContext, PicklePersistence, MessageHandler, Filters
+from telegram import Message, error, Update, Chat, ParseMode
+from telegram.ext import (
+    Updater, CommandHandler, CallbackContext, ChatMemberHandler, PicklePersistence, MessageHandler, Filters
+)
 
 from stonks_bot import conf
-from stonks_bot.actions import bot_added_to_group
 from stonks_bot.discovery import Discovery
 from stonks_bot.helper.args import parse_symbols, parse_daily_perf_count, parse_reddit
 from stonks_bot.helper.command import restricted_command, send_typing_action, check_symbol_limit, log_error
 from stonks_bot.helper.data import factory_defaultdict
 from stonks_bot.helper.exceptions import InvalidSymbol
 from stonks_bot.helper.formatters import formatter_conditional_no_dec, formatter_to_json
-from stonks_bot.helper.handler import error_handler
+from stonks_bot.helper.handler import error_handler, track_chats, greet_chat_members, log_message_handler, \
+    bot_removed_from
 from stonks_bot.helper.math import round_currency_scalar
 from stonks_bot.helper.message import reply_with_photo, reply_symbol_error, reply_message, send_photo, \
     reply_command_unknown, send_message, reply_random_gif
 from stonks_bot.sentiment.redditanalysis import RedditAnalysis
 from stonks_bot.sentiment.stocktwits import Stocktwits
 from stonks_bot.stonk import Stonk
+
+# General logging
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
+log_level = logging.DEBUG if conf.DEBUG else logging.ERROR
+logger.setLevel(log_level)
 
 
 @log_error(error_handler, 'Command does not exist.')
@@ -102,9 +112,73 @@ def help_admin(update: Update, context: CallbackContext) -> NoReturn:
 * /exec_job_check_rise_fall | /ejcrf -> Executes check_rise_fall immediately.
 * /all_stonk_clear | /asc -> Clears all stonk lists of all chats.
 * /bot_list_all_data | /blad -> Lists internal data storage.
+* /show_chats -> Lists all chats.
+* /chat_data_reset | acdr -> Clear all chat data in `bot_data`.
 """
 
     reply_message(update, reply)
+
+
+@restricted_command(error_handler, 'Command execution forbidden (restricted access).')
+def show_chats(update: Update, context: CallbackContext) -> None:
+    """Shows which chats the bot is in"""
+    users = ''
+    groups = ''
+    channels = ''
+
+    for key, user in context.bot_data.setdefault(conf.INTERNALS['users'], {}).items():
+        users += f'{user.chat.username} ({user.chat.id}),'
+    users = users[:-1] if users != '' else 'N/A'
+
+    for key, group in context.bot_data.setdefault(conf.INTERNALS['groups'], {}).items():
+        groups += f'{group.chat.title} ({group.chat.id}) by {group.cause_user.username} ({group.cause_user.id}),'
+    groups = groups[:-1] if groups != '' else 'N/A'
+
+    for key, channel in context.bot_data.setdefault(conf.INTERNALS['channels'], {}).items():
+        channels += f'{channel.chat.title} ({channel.chat.id}) by {channel.cause_user.username} (' \
+                    f'{channel.cause_user.id}),'
+    channels = channels[:-1] if channels != '' else 'N/A'
+    text = (
+        f'Users: {users}.\n\n'
+        f'Groups: {groups}.\n\n'
+        f'Channels: {channels}.'
+    )
+
+    reply_message(update, text, parse_mode=ParseMode.HTML, pre=True)
+
+
+@restricted_command(error_handler, 'Command execution forbidden (restricted access).')
+def chat_data_reset(update: Update, context: CallbackContext) -> None:
+    """Removes all chat data, e.g. in case of data structure changes. Tries to leave the chats in advance."""
+    bot = context.bot
+
+    keys_groups = list(context.bot_data.setdefault(conf.INTERNALS['groups'], {}).keys())
+    keys_channels = list(context.bot_data.setdefault(conf.INTERNALS['channels'], {}).keys())
+    keys_users = list(context.bot_data.setdefault(conf.INTERNALS['users'], {}).keys())
+
+    for key in keys_groups:
+        try:
+            bot.leave_chat(key)
+        except Exception as e:
+            raise e
+        bot_removed_from(update, context, conf.INTERNALS['groups'], key)
+
+    for key in keys_channels:
+        try:
+            bot.leave_chat(key)
+        except Exception as e:
+            raise e
+        bot_removed_from(update, context, conf.INTERNALS['channels'], key)
+
+    for key in keys_users:
+        bot_removed_from(update, context, conf.INTERNALS['users'], key)
+
+    msg = ''.join(('Chat data was successfully reset.\n\n',
+           f'Group IDs left: {", ".join(keys_groups)}\n\n',
+           f'Channel IDs left: {", ".join(keys_channels)}\n\n',
+           f'User IDs (cannot leave/block them): {", ".join(keys_users)}\n\n'
+           ))
+    log_message_handler(context, msg)
 
 
 @check_symbol_limit
@@ -358,18 +432,6 @@ def check_rise_fall_day(context: CallbackContext) -> NoReturn:
                         break
 
 
-def added_to_group(update: Update, context: CallbackContext):
-    if context.bot.bot in update.message.new_chat_members or update.message.group_chat_created:
-        bot_added_to_group(update, context)
-
-
-def removed_from_group(update: Update, context: CallbackContext):
-    if context.bot.bot == update.message.left_chat_member:
-        g = context.bot_data.get(conf.INTERNALS['groups'], {})
-        g.pop(update.message.chat_id, None)
-        context.bot_data[conf.INTERNALS['groups']] = g
-
-
 def bot_init(updater: Updater) -> NoReturn:
     pass
 
@@ -540,7 +602,8 @@ def bot_list_all_data(update: Update, context: CallbackContext):
     chat_data = context.dispatcher.chat_data
     bot_data = context.dispatcher.bot_data
     chat_ids = list(
-        set(list(user_data.keys()) + list(chat_data.keys()) + list(bot_data.get(conf.INTERNALS['groups'], {}).keys())))
+            set(list(user_data.keys()) + list(chat_data.keys()) + list(
+                    bot_data.get(conf.INTERNALS['groups'], {}).keys())))
     bot = context.bot
     result = 'User Info:\n'
 
@@ -747,7 +810,7 @@ def trending_symbols(update: Update, context: CallbackContext):
     reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
 
 
-def main():
+def main() -> NoReturn:
     """Run bot."""
     persist = PicklePersistence(filename=f'{conf.PERSISTENCE_NAME}.pickle')
     # Create the Updater and pass it your bot's token.
@@ -762,6 +825,9 @@ def main():
     dispatcher.add_handler(CommandHandler('h', help, run_async=True))
     dispatcher.add_handler(CommandHandler('help_admin', help_admin, run_async=True))
     dispatcher.add_handler(CommandHandler('ha', help_admin, run_async=True))
+    dispatcher.add_handler(CommandHandler('show_chats', show_chats, run_async=True))
+    dispatcher.add_handler(CommandHandler('chat_data_reset', chat_data_reset, run_async=True))
+    dispatcher.add_handler(CommandHandler('acdr', chat_data_reset, run_async=True))
     dispatcher.add_handler(CommandHandler('stonk_add', stonk_add))
     dispatcher.add_handler(CommandHandler('sa', stonk_add))
     dispatcher.add_handler(CommandHandler('stonk_del', stonk_del))
@@ -839,9 +905,10 @@ def main():
     dispatcher.add_error_handler(error_handler, run_async=True)
 
     # Message handler
-    dispatcher.add_handler(MessageHandler(Filters.status_update.new_chat_members |
-                                          Filters.status_update.chat_created, added_to_group, run_async=True))
-    dispatcher.add_handler(MessageHandler(Filters.status_update.left_chat_member, removed_from_group, run_async=True))
+    # Keep track of which chats the bot is in
+    dispatcher.add_handler(ChatMemberHandler(track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
+    # Handle members joining/leaving chats.
+    dispatcher.add_handler(ChatMemberHandler(greet_chat_members, ChatMemberHandler.CHAT_MEMBER))
 
     # Unknown command. this handler must be added last.
     dispatcher.add_handler(MessageHandler(Filters.command, command_unknown, run_async=True))
@@ -854,7 +921,7 @@ def main():
     bot_init(updater)
 
     # Start the Bot
-    updater.start_polling()
+    updater.start_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
     # Block until you press Ctrl-C or the process receives SIGINT, SIGTERM or
     # SIGABRT. This should be used most of the time, since start_polling() is
