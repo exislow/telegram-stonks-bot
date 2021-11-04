@@ -40,11 +40,11 @@ def restricted_command(func_error_handler: Callable, error_message: str, in_grou
 
                     reply_random_gif(update, 'fuck you')
 
-                    return
+                    return False
                 elif not in_private and not in_group:
                     # Error state. Not allowed.
                     # TODO: Create a message / warning to admin.
-                    return
+                    return False
             return func(update, context, *args, **kwargs)
 
         return wrapped
@@ -61,7 +61,7 @@ def restricted_add(func_error_handler: Callable, error_message: str) -> Union[Ca
             if user_id not in conf.USER_ID['admins']:
                 func_error_handler(update, context, error_message)
 
-                reply = f'🖕🖕🖕 You are not allowed to add this bot to groups.'
+                reply = f'🖕🖕🖕 You are not allowed to bring this bot here.'
                 update.message.reply_text(reply)
 
                 reply_random_gif(update, 'fuck you')
