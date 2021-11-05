@@ -62,15 +62,17 @@ def start(update: Update, context: CallbackContext) -> NoReturn:
 def help(update: Update, context: CallbackContext) -> NoReturn:
     reply = """Hi ape, I am the STONKS BOT! Try to use the following commands:
 Fundamental:
+* /chart [<SYMBOLs/ISINs>] | /c -> Plot the last trading day of a stock.
+* /price | /p [<SYMBOLs/ISINs>] -> Get details about the stonk price
+* /details | /d [<SYMBOLs/ISINs>] -> Shortcut for /chart & /price.
 * /stonk_add [<SYMBOLs/ISINs>] | /sa -> Add a stock to the watchlist.
 * /stonk_del [<SYMBOLs/ISINs>] | /sd -> Delete a stock from the watchlist.
 * /stonk_list | /sl -> Show the watchlist.
 * /stonk_clear | /sc -> Clears the watchlist (not allowed in group chats).
 * /list_price | /lp -> List watchlist prices.
-* /chart [<SYMBOLs/ISINs>] | /c -> Plot the last trading day of a stock.
 
 Discovery:
-* /discovery | /d -> Useful infos to find hot stocks.
+* /discovery | /di -> Useful infos to find hot stocks.
 * /sector_performance | /sp -> Show sector daily performance.
 * /upcoming_earnings | /ue -> Show upcoming earning dates.
 * /stonk_upcoming_earnings | /sue -> Show upcoming earning dates for watched stonks.
@@ -96,12 +98,12 @@ Sentiment:
 * /cryptomarkets (<sort={hot, rising, new} count>) | /rcm -> Show relevant r/ posts.
 * /satoshistreetbets (<sort={hot, rising, new} count>) | /ssb -> Show relevant r/ posts.
 * /popular_symbols (<sort={hot, rising, new} count>) | /ps -> Show popular symbols from Reddit.
-* /bullbear [<SYMBOLs] | /bb -> Bull / Bear analysis for chosen symbols.
-* /stock_messages [<SYMBOLs] | /sm -> Get the latest TwitStock messages for chosen symbols.
+* /bullbear [<SYMBOLs>] | /bb -> Bull / Bear analysis for chosen symbols.
+* /stock_messages [<SYMBOLs>] | /sm -> Get the latest TwitStock messages for chosen symbols.
 * /trending_symbols | /ts -> Get the latest trending symbols from TwitStock.
 """
 
-    reply_message(update, reply)
+    reply_message(update, reply, pre=True, parse_mode=ParseMode.HTML)
 
 
 @restricted_command(error_handler, 'Command execution forbidden (restricted access).')
@@ -113,10 +115,10 @@ def help_admin(update: Update, context: CallbackContext) -> NoReturn:
 * /all_stonk_clear | /asc -> Clears all stonk lists of all chats.
 * /bot_list_all_data | /blad -> Lists internal data storage.
 * /show_chats -> Lists all chats.
-* /chat_data_reset | acdr -> Clear all chat data in `bot_data`.
+* /chat_data_reset | /acdr -> Clear all chat data in `bot_data`.
 """
 
-    reply_message(update, reply)
+    reply_message(update, reply, pre=True, parse_mode=ParseMode.HTML)
 
 
 @restricted_command(error_handler, 'Command execution forbidden (restricted access).')
