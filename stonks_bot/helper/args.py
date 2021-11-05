@@ -9,7 +9,7 @@ parser_symbol = ArgumentParser(description='Symbol to lookup.')
 parser_symbol.add_argument('symbol', nargs='+', type=str, help='What symbol do you want to lookup?')
 
 
-def parse_symbols(update: Update, args: List[Any]) -> Union[List[Union[None, str]]]:
+def parse_symbols(update: Update, args: List[str]) -> Union[List[Union[None, str]]]:
     try:
         args = parser_symbol.parse_args(args)
         result = args.symbol

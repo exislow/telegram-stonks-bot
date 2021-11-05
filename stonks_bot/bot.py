@@ -351,7 +351,7 @@ def list_price(update: Update, context: CallbackContext) -> NoReturn:
 
 @send_typing_action
 def chart(update: Update, context: CallbackContext, reply: bool = True,
-          symbols: Union[bool, List[Union[None, str]]] = False) -> NoReturn:
+          symbols: Union[bool, List[Union[None, str]]] = False, caption: str = '', pre: bool = True) -> NoReturn:
     if not symbols:
         symbols = parse_symbols(update, context.args)
 
@@ -369,9 +369,9 @@ def chart(update: Update, context: CallbackContext, reply: bool = True,
         c_buf = s.chart()
 
         if reply:
-            reply_with_photo(update, c_buf)
+            reply_with_photo(update, c_buf, caption=caption, pre=pre)
         else:
-            send_photo(context, update.effective_message.chat_id, c_buf)
+            send_photo(context, update.effective_message.chat_id, c_buf, caption=caption, pre=pre)
 
 
 def check_rise_fall_day(context: CallbackContext) -> NoReturn:
@@ -834,6 +834,31 @@ def price(update: Update, context: CallbackContext, reply: bool = True,
             send_message(context, update.effective_message.chat_id, p_text, parse_mode=ParseMode.HTML, pre=True)
 
 
+@send_typing_action
+def details(update: Update, context: CallbackContext, reply: bool = True,
+          symbols: Union[bool, List[Union[None, str]]] = False):
+    if not symbols:
+        symbols = parse_symbols(update, context.args)
+
+    if len(symbols) == 0:
+        return False
+
+    for symbol in symbols:
+        try:
+            s = Stonk(symbol)
+        except InvalidSymbol:
+            reply_symbol_error(update, symbol)
+
+            continue
+
+        p_text = s.details_price_textual()
+
+        if reply:
+            chart(update, context, symbols=[symbol], caption=p_text, pre=True)
+        else:
+            send_message(context, update.effective_message.chat_id, p_text, parse_mode=ParseMode.HTML, pre=True)
+
+
 def main() -> NoReturn:
     """Run bot."""
     persist = PicklePersistence(filename=f'{conf.PERSISTENCE_NAME}.pickle')
@@ -865,7 +890,7 @@ def main() -> NoReturn:
     dispatcher.add_handler(CommandHandler('chart', chart, run_async=True))
     dispatcher.add_handler(CommandHandler('c', chart, run_async=True))
     dispatcher.add_handler(CommandHandler('discovery', discovery_websites, run_async=True))
-    dispatcher.add_handler(CommandHandler('d', discovery_websites, run_async=True))
+    dispatcher.add_handler(CommandHandler('di', discovery_websites, run_async=True))
     dispatcher.add_handler(CommandHandler('sector_performance', sector_performance, run_async=True))
     dispatcher.add_handler(CommandHandler('sp', sector_performance, run_async=True))
     dispatcher.add_handler(CommandHandler('upcoming_earnings', upcoming_earnings, run_async=True))
@@ -926,6 +951,8 @@ def main() -> NoReturn:
     dispatcher.add_handler(CommandHandler('ts', trending_symbols, run_async=True))
     dispatcher.add_handler(CommandHandler('price', price, run_async=True))
     dispatcher.add_handler(CommandHandler('p', price, run_async=True))
+    dispatcher.add_handler(CommandHandler('details', details, run_async=True))
+    dispatcher.add_handler(CommandHandler('d', details, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)

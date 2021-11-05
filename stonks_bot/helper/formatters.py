@@ -73,3 +73,6 @@ class TelegramEncoder(JSONEncoder):
     def default(self, o):
         return o.to_dict()
 
+
+def text_pre(text):
+    return f'<pre>{text}</pre>'

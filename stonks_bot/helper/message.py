@@ -4,15 +4,22 @@ from telegram import Update, ParseMode
 from telegram.ext import CallbackContext
 
 from stonks_bot import conf
+from stonks_bot.helper.formatters import text_pre
 from stonks_bot.helper.media import gif_random
 
 
-def reply_with_photo(update: Update, photo: Any) -> None:
-    update.effective_message.reply_photo(photo, quote=True)
+def reply_with_photo(update: Update, photo: Any, caption: str = '', pre: bool = False,
+                     parse_mode: ParseMode = ParseMode.HTML) -> None:
+    caption = caption if not pre else text_pre(caption)
+
+    update.effective_message.reply_photo(photo, quote=True, caption=caption, parse_mode=parse_mode)
 
 
-def send_photo(context: CallbackContext, chat_id: int, photo: Any) -> None:
-    context.bot.send_photo(chat_id=chat_id, photo=photo)
+def send_photo(context: CallbackContext, chat_id: int, photo: Any, caption: str = '', pre: bool = False,
+               parse_mode: ParseMode = ParseMode.HTML) -> None:
+    caption = caption if not pre else text_pre(caption)
+
+    context.bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, parse_mode=parse_mode)
 
 
 def reply_random_gif(update: Update, search_term) -> None:
@@ -32,7 +39,7 @@ def reply_message(update: Update, text: str, parse_mode: str = None, pre: bool =
     text_list = split_long_message(text)
 
     for t in text_list:
-        msg = t if not pre else f'<pre>{t}</pre>'
+        msg = t if not pre else text_pre(t)
 
         update.effective_message.reply_text(msg, parse_mode=parse_mode, quote=True)
 
@@ -41,7 +48,7 @@ def send_message(context: CallbackContext, chat_id: int, text: str, parse_mode: 
     text_list = split_long_message(text)
 
     for t in text_list:
-        msg = t if not pre else f'<pre>{t}</pre>'
+        msg = t if not pre else text_pre(t)
 
         context.bot.send_message(chat_id=chat_id, text=msg, parse_mode=parse_mode)
 
