@@ -104,7 +104,7 @@ Sentiment:
 * /trending_symbols | /ts -> Get the latest trending symbols from TwitStock.
 """
 
-    reply_message(update, reply, pre=True, parse_mode=ParseMode.HTML)
+    reply_message(update, reply)
 
 
 @restricted_command(error_handler, 'Command execution forbidden (restricted access).')
@@ -119,7 +119,7 @@ def help_admin(update: Update, context: CallbackContext) -> NoReturn:
 * /chat_data_reset | /acdr -> Clear all chat data in `bot_data`.
 """
 
-    reply_message(update, reply, pre=True, parse_mode=ParseMode.HTML)
+    reply_message(update, reply)
 
 
 @restricted_command(error_handler, 'Command execution forbidden (restricted access).')
