@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 from yahoo_earnings_calendar import YahooEarningsCalendar
 
 from stonks_bot import conf, Currency
-from stonks_bot.helper.formatters import formatter_date, formatter_shorten_1, formatter_offset_1, formatter_percent, \
-    formatter_conditional_no_dec, formatter_round_currency_scalar
+from stonks_bot.helper.formatters import formatter_date, formatter_shorten_1, formatter_percent, \
+    formatter_round_currency_scalar
 from stonks_bot.helper.plot import PlotContext
 from stonks_bot.helper.web import get_user_agent
 
@@ -99,13 +99,13 @@ class Discovery(object):
 
         if convert_currency:
             columns_to_convert = [columns[2], columns[3]]
-            df = self.currency.convert_to_currency(self.currency_api, df, columns_to_convert)
+            df = self.currency.convert_to_currency_df(self.currency_api, df, columns_to_convert)
 
         result = df[columns].to_string(header=['Company', 'Sym', 'Price', '±', '%'],
-                                            index=False, formatters={columns[0]: '{:.9}'.format,
-                                                                     columns[2]: formatter_round_currency_scalar,
-                                                                     columns[3]: formatter_round_currency_scalar,
-                                                                     columns[4]: formatter_percent})
+                                       index=False, formatters={columns[0]: '{:.9}'.format,
+                                                                columns[2]: formatter_round_currency_scalar,
+                                                                columns[3]: formatter_round_currency_scalar,
+                                                                columns[4]: formatter_percent})
 
         return result
 
@@ -114,7 +114,7 @@ class Discovery(object):
         df = pd.read_html(url)[0]
         columns = ['Name', 'Symbol', 'Volume']
         result = df[columns].to_string(header=['Company', 'Sym', 'Volume'],
-                                              index=False, formatters={columns[0]: '{:.15}'.format})
+                                       index=False, formatters={columns[0]: '{:.15}'.format})
 
         return result
 
@@ -123,8 +123,6 @@ class Discovery(object):
         result = self.get_short_float(url, count)
 
         return result
-
-        df = self.get_short_float_penny(url)
 
     def low_float(self, count: int = 15) -> str:
         url = 'https://www.lowfloat.com/'
@@ -152,7 +150,7 @@ class Discovery(object):
 
         if convert_currency:
             columns_to_convert = [columns[2]]
-            df = self.currency.convert_to_currency(self.currency_api, df, columns_to_convert)
+            df = self.currency.convert_to_currency_df(self.currency_api, df, columns_to_convert)
 
         result = df[columns].head(n=count).to_string(header=['Sym.', 'Trades', 'Price', '±%'], index=False,
                                                      formatters={columns[2]: formatter_round_currency_scalar,

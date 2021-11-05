@@ -351,8 +351,7 @@ def list_price(update: Update, context: CallbackContext) -> NoReturn:
 
 @send_typing_action
 def chart(update: Update, context: CallbackContext, reply: bool = True,
-          symbols: Union[bool, List[Union[None, str]]] = False) -> Union[
-    None, bool]:
+          symbols: Union[bool, List[Union[None, str]]] = False) -> NoReturn:
     if not symbols:
         symbols = parse_symbols(update, context.args)
 
@@ -365,7 +364,7 @@ def chart(update: Update, context: CallbackContext, reply: bool = True,
         except InvalidSymbol:
             reply_symbol_error(update, symbol)
 
-            return False
+            continue
 
         c_buf = s.chart()
 
@@ -810,6 +809,31 @@ def trending_symbols(update: Update, context: CallbackContext):
     reply_message(update, result, parse_mode=ParseMode.HTML, pre=True)
 
 
+@send_typing_action
+def price(update: Update, context: CallbackContext, reply: bool = True,
+          symbols: Union[bool, List[Union[None, str]]] = False):
+    if not symbols:
+        symbols = parse_symbols(update, context.args)
+
+    if len(symbols) == 0:
+        return False
+
+    for symbol in symbols:
+        try:
+            s = Stonk(symbol)
+        except InvalidSymbol:
+            reply_symbol_error(update, symbol)
+
+            continue
+
+        p_text = s.details_price_textual()
+
+        if reply:
+            reply_message(update, p_text, parse_mode=ParseMode.HTML, pre=True)
+        else:
+            send_message(context, update.effective_message.chat_id, p_text, parse_mode=ParseMode.HTML, pre=True)
+
+
 def main() -> NoReturn:
     """Run bot."""
     persist = PicklePersistence(filename=f'{conf.PERSISTENCE_NAME}.pickle')
@@ -900,6 +924,8 @@ def main() -> NoReturn:
     dispatcher.add_handler(CommandHandler('sm', stock_messages, run_async=True))
     dispatcher.add_handler(CommandHandler('trending_symbols', trending_symbols, run_async=True))
     dispatcher.add_handler(CommandHandler('ts', trending_symbols, run_async=True))
+    dispatcher.add_handler(CommandHandler('price', price, run_async=True))
+    dispatcher.add_handler(CommandHandler('p', price, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)

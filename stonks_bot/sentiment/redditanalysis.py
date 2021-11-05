@@ -14,8 +14,7 @@ from telegram.ext import CallbackContext
 
 from stonks_bot import conf, Currency
 from stonks_bot.config import Config
-from stonks_bot.helper.formatters import formatter_round_currency_scalar, formatter_date, formatter_percent, \
-    formatter_conditional_no_dec
+from stonks_bot.helper.formatters import formatter_round_currency_scalar, formatter_date, formatter_conditional_no_dec
 from stonks_bot.helper.message import reply_message, reply_random_gif
 
 
@@ -78,7 +77,7 @@ class RedditAnalysis(object):
 
     def stockmarket(self, sort: str = 'hot', count: int = 15):
         result = self._posts('StockMarket', ['News', '"Technical Analysis"', '"Fundamentals/DD"', 'Crypto',
-                                                   '"Education/Lessons Learned"'], sort, count)
+                                             '"Education/Lessons Learned"'], sort, count)
 
         return result
 
@@ -105,7 +104,8 @@ class RedditAnalysis(object):
     def _posts(self, sub: str, flair: List[Union[str, None]], sort: str = 'hot', limit: int = 15) -> str:
         praw_api = self._get_reddit_client()
         flair_str = 'flair:'
-        flair_str += f"({' OR '.join(flair)})" if len(flair) > 0 else '(NOT asdfghdfdafsgdhfffdsgh)' # Something never occurse
+        flair_str += f"({' OR '.join(flair)})" if len(
+            flair) > 0 else '(NOT asdfghdfdafsgdhfffdsgh)'  # Something never occurse
         submissions = praw_api.subreddit(sub).search(flair_str, sort=sort, limit=limit)
         columns = ['created_utc', 'subreddit', 'title', 'link', 'flair', 'score', 'comments_count',
                    'upvote_ratio']
@@ -173,7 +173,8 @@ class RedditAnalysis(object):
             blacklist = ['YOLO', 'LMAO', 'LOL', 'MOFO', 'HAHA', 'DFV', 'WSB', 'MSW', 'CEO', 'CTO', 'CFO', 'CIO', 'USER']
             tickers_clean = [t for t in tickers_dedup if t not in blacklist]
 
-            history = yf.download(' '.join(tickers_clean), period='1mo', prepost=True, actions=False, progress=False, group_by='ticker')
+            history = yf.download(' '.join(tickers_clean), period='1mo', prepost=True, actions=False, progress=False,
+                                  group_by='ticker')
             tickers_not_existing = list(yf.shared._ERRORS.keys())
             tickers_existing = [t for t in tickers_clean if t not in tickers_not_existing]
             tickers = yf.Tickers(' '.join(tickers_existing))
@@ -204,14 +205,14 @@ class RedditAnalysis(object):
 
             if convert_currency:
                 columns_to_convert = [columns[3]]
-                df = self.currency.convert_to_currency(self.currency_api, df, columns_to_convert)
+                df = self.currency.convert_to_currency_df(self.currency_api, df, columns_to_convert)
 
             df = df.sort_values(by=columns[2], ascending=False)
             result = df[columns[:-1]].to_string(header=['Company', 'Sym', '#', 'Price', '% 1mo', 'Earn.📅'],
-                                  index=False, formatters={columns[0]: '{:.9}'.format,
-                                                           columns[3]: formatter_round_currency_scalar,
-                                                           columns[4]: formatter_conditional_no_dec,
-                                                           columns[5]: formatter_date})
+                                                index=False, formatters={columns[0]: '{:.9}'.format,
+                                                                         columns[3]: formatter_round_currency_scalar,
+                                                                         columns[4]: formatter_conditional_no_dec,
+                                                                         columns[5]: formatter_date})
         else:
             result = 'No symbols could be found. Try again later.'
 

@@ -41,11 +41,20 @@ class Currency(object):
 
         return result
 
-    def convert_to_currency(self, symbol: str, df: pd.DataFrame, columns: List[str]) -> pd.DataFrame:
+    def convert_to_currency_df(self, symbol: str, df: pd.DataFrame, columns: List[str]) -> pd.DataFrame:
         exc_rate = self.get_exchange_rate(symbol)
         df[columns] = df[columns].mul(exc_rate)
 
         return df
+
+    def convert_to_currency(self, symbol: str, values: dict) -> dict:
+        exc_rate = self.get_exchange_rate(symbol)
+        result = {}
+
+        for key, item in values.items():
+            result[key] = item * exc_rate
+
+        return result
 
     def _fetch_exchange_rate(self, symbol: str) -> Union[float]:
         yf_df = yf.download(tickers=f'{symbol}{self.currency_local}=X', period='1d', group_by='ticker')
