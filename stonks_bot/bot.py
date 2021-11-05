@@ -61,6 +61,7 @@ def start(update: Update, context: CallbackContext) -> NoReturn:
 
 def help(update: Update, context: CallbackContext) -> NoReturn:
     reply = """Hi ape, I am the STONKS BOT! Try to use the following commands:
+* /help | /h -> This help.
 Fundamental:
 * /chart [<SYMBOLs/ISINs>] | /c -> Plot the last trading day of a stock.
 * /price | /p [<SYMBOLs/ISINs>] -> Get details about the stonk price
