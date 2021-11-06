@@ -1,3 +1,5 @@
+import json
+import re
 from datetime import date, timedelta
 from io import BytesIO
 
@@ -8,8 +10,9 @@ from bs4 import BeautifulSoup
 from yahoo_earnings_calendar import YahooEarningsCalendar
 
 from stonks_bot import conf, Currency
-from stonks_bot.helper.formatters import formatter_date, formatter_shorten_1, formatter_percent, \
-    formatter_round_currency_scalar
+from stonks_bot.helper.exceptions import BackendDataNotFound
+from stonks_bot.helper.formatters import formatter_date, formatter_shorten_1, formatter_round_currency_scalar, \
+    formatter_conditional_no_dec
 from stonks_bot.helper.plot import PlotContext
 from stonks_bot.helper.web import get_user_agent
 
@@ -94,8 +97,28 @@ class Discovery(object):
         return result
 
     def get_daily_performers(self, yf_url: str, convert_currency: bool = True) -> str:
-        df = pd.read_html(yf_url)[0]
+        resp = requests.get(yf_url, headers={'User-Agent': get_user_agent()})
+        regex = r'root\.App\.main = .*}\(this\)\);'
+        matches = re.search(regex, resp.text, re.DOTALL)
+
+        if not matches:
+            error_msg = 'Backend data not found. Please contact an administrator.'
+
+            raise BackendDataNotFound(error_msg)
+
+        json_str = matches.group(0).replace('\n', '').replace('\r', '').replace('root.App.main = ', '').replace(
+                ';}(this));', '')
+        result = json.loads(json_str)
         columns = ['Name', 'Symbol', 'Price (Intraday)', 'Change', '% Change']
+        df_data = list()
+
+        for row in result['context']['dispatcher']['stores']['ScreenerResultsStore']['results']['rows']:
+            df_data.append([
+                row['shortName'], row['symbol'], row['regularMarketPrice']['raw'], row['regularMarketChange']['raw'],
+                row['regularMarketChangePercent']['raw'],
+            ])
+
+        df = pd.DataFrame(df_data, columns=columns)
 
         if convert_currency:
             columns_to_convert = [columns[2], columns[3]]
@@ -105,7 +128,7 @@ class Discovery(object):
                                        index=False, formatters={columns[0]: '{:.9}'.format,
                                                                 columns[2]: formatter_round_currency_scalar,
                                                                 columns[3]: formatter_round_currency_scalar,
-                                                                columns[4]: formatter_percent})
+                                                                columns[4]: formatter_conditional_no_dec})
 
         return result
 
