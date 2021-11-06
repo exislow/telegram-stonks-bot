@@ -24,7 +24,9 @@ def send_photo(context: CallbackContext, chat_id: int, photo: Any, caption: str 
 
 def reply_random_gif(update: Update, search_term) -> None:
     rg = gif_random(search_term)
-    rg_url = rg.data.image_original_url
+    # TODO: Uncomment if Giphy SDK is fixed again.
+    #rg_url = rg.data.image_original_url
+    rg_url = rg['data']['images']['original']['url']
 
     update.effective_message.reply_animation(rg_url)
 
