@@ -90,6 +90,12 @@ class Stonk(object):
 
     def _set_info_data(self, yf_ticker: yf.Ticker) -> None:
         info = yf_ticker.get_info()
+
+        # Check if this is an equity. If not, raise error, since only equity is implemented.
+        if not info['quoteType'] == 'EQUITY':
+            raise Exception(
+                f'"{self.symbol}" is "quoteType" == "{info["quoteType"]}". This "quoteType" is not implemented, yet.')
+
         self.recommendation = info['recommendationKey'] if 'recommendationKey' in info else 'N/A'
         self.percent_change_52w = info['52WeekChange']
         self.volume = info['volume']
