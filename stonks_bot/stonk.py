@@ -5,6 +5,7 @@ from typing import Union
 import pandas as pd
 import requests
 import yfinance as yf
+from si_prefix import si_format
 from tabulate import tabulate, simple_separated_format
 
 from stonks_bot import conf, Currency
@@ -212,16 +213,16 @@ class Stonk(object):
     def details_price(self) -> StonkDetails:
         yf_df_2d_hourly = self._get_financials_adjusted('2d', '1h')
         yf_df_1y_daily = self._get_financials_adjusted('1y', '1d')
-        d_24h = datetime.today() - timedelta(hours=24)
+        d_24h_cond = yf_df_2d_hourly.index[-1] - timedelta(hours=24)
         d_7d = datetime.today() - timedelta(days=7)
         d_30d = datetime.today() - timedelta(days=30)
         d_52w = datetime.today() - timedelta(weeks=52)
         d_ytd = datetime(datetime.now().year, 1, 1)
 
-        price_24h_high = yf_df_2d_hourly.High[d_24h:].max()
-        price_24h_low = yf_df_2d_hourly.Low[d_24h:].min()
+        price_24h_high = yf_df_2d_hourly.High[d_24h_cond:].max()
+        price_24h_low = yf_df_2d_hourly.Low[d_24h_cond:].min()
         percent_change_1h = change_percent(yf_df_2d_hourly.Close[-2], self.current_price)
-        percent_change_24h = change_percent(yf_df_2d_hourly.Close[:d_24h][-1], self.current_price)
+        percent_change_24h = change_percent(yf_df_2d_hourly.Close[:d_24h_cond][-1], self.current_price)
         percent_change_7d = change_percent(yf_df_1y_daily.Close[:d_7d][-1], self.current_price)
         percent_change_30d = change_percent(yf_df_1y_daily.Close[:d_30d][-1], self.current_price)
         percent_change_52w = change_percent(yf_df_1y_daily.Close[:d_52w][-1], self.current_price)
@@ -241,6 +242,11 @@ class Stonk(object):
     def details_price_textual(self) -> str:
         sd = self.details_price()
 
+        si_volume = si_format(sd.volume, precision=2)
+        si_cap = si_format(round_currency_scalar(sd.market_capitalization), precision=2)
+        si_volume_f = float(si_volume[:-1])
+        si_cap_f = float(si_cap[:-1])
+
         data = [{
             conf.LOCAL['currency']: round_currency_scalar(sd.price),
             '24h H': round_currency_scalar(sd.price_24h_high),
@@ -253,8 +259,8 @@ class Stonk(object):
             '% 30d': round_percent(sd.percent_change_30d),
             '% 52w': round_percent(sd.percent_change_52w),
             '% YTD': round_percent(sd.percent_change_ytd),
-            'Vol': sd.volume,
-            'Cap': round_currency_scalar(sd.market_capitalization),
+            'Vol': si_volume_f,
+            'Cap': si_cap_f,
             # 'Recom': sd.recommendation
         }]
 
@@ -264,9 +270,11 @@ class Stonk(object):
         df_T = df.T
         tablefmt = simple_separated_format(': ')
         text = tabulate(df_T, tablefmt=tablefmt, colalign=('right', 'decimal'))
+        text = text.replace(str(si_volume_f), si_volume)
+        text = text.replace(str(si_cap_f), si_cap)
         text = ''.join((f'       {self.symbol}\n',
-                    f'{text}\n',
-                    f'Recom: {sd.recommendation}'
-                    ))
+                        f'{text}\n',
+                        f'Recom: {sd.recommendation}'
+                        ))
 
         return text

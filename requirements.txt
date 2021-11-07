@@ -15,3 +15,4 @@ psaw==0.1.0
 html5lib==1.1
 dataclasses-json==0.5.6
 tabulate==0.8.9
+si-prefix==1.2.2
