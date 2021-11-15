@@ -13,7 +13,7 @@ from stonks_bot.dataclasses.performance import Performance
 from stonks_bot.dataclasses.price_daily import PriceDaily
 from stonks_bot.dataclasses.stonk_details import StonkDetails
 from stonks_bot.helper.exceptions import InvalidSymbol
-from stonks_bot.helper.math import round_currency_scalar, change_percent, round_percent
+from stonks_bot.helper.math import round_currency_scalar, change_percent, round_percent, get_last_value_times_series
 from stonks_bot.helper.plot import PlotContext
 
 
@@ -94,7 +94,8 @@ class Stonk(object):
         # Check if this is an equity. If not, raise error, since only equity is implemented.
         if not info['quoteType'] == 'EQUITY':
             raise Exception(
-                f'"{self.symbol}" is "quoteType" == "{info["quoteType"]}". This "quoteType" is not implemented, yet.')
+                    f'"{self.symbol}" is "quoteType" == "{info["quoteType"]}". This "quoteType" is not implemented, '
+                    f'yet.')
 
         self.recommendation = info['recommendationKey'] if 'recommendationKey' in info else 'N/A'
         self.percent_change_52w = info['52WeekChange']
@@ -228,11 +229,14 @@ class Stonk(object):
         price_24h_high = yf_df_2d_hourly.High[d_24h_cond:].max()
         price_24h_low = yf_df_2d_hourly.Low[d_24h_cond:].min()
         percent_change_1h = change_percent(yf_df_2d_hourly.Close[-2], self.current_price)
-        percent_change_24h = change_percent(yf_df_2d_hourly.Close[:d_24h_cond][-1], self.current_price)
-        percent_change_7d = change_percent(yf_df_1y_daily.Close[:d_7d][-1], self.current_price)
-        percent_change_30d = change_percent(yf_df_1y_daily.Close[:d_30d][-1], self.current_price)
-        percent_change_52w = change_percent(yf_df_1y_daily.Close[:d_52w][-1], self.current_price)
-        percent_change_ytd = change_percent(yf_df_1y_daily.Close[d_ytd:][1], self.current_price)
+        percent_change_24h = change_percent(get_last_value_times_series(yf_df_2d_hourly.Close, d_24h_cond),
+                                            self.current_price)
+        percent_change_7d = change_percent(get_last_value_times_series(yf_df_1y_daily.Close, d_7d), self.current_price)
+        percent_change_30d = change_percent(get_last_value_times_series(yf_df_1y_daily.Close, d_30d),
+                                            self.current_price)
+        percent_change_52w = change_percent(get_last_value_times_series(yf_df_1y_daily.Close, d_52w),
+                                            self.current_price)
+        percent_change_ytd = change_percent(yf_df_1y_daily.Close[d_ytd:][0], self.current_price)
 
         sd = StonkDetails(price=self.current_price, price_24h_high=price_24h_high, price_24h_low=price_24h_low,
                           price_52w_high=self.price_52w_high, price_52w_low=self.price_52w_low,

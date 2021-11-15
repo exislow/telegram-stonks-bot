@@ -859,7 +859,7 @@ def details(update: Update, context: CallbackContext, reply: bool = True,
         if reply:
             chart(update, context, symbols=[symbol], caption=p_text, pre=True)
         else:
-            send_message(context, update.effective_message.chat_id, p_text, parse_mode=ParseMode.HTML, pre=True)
+            chart(update, context, reply=reply, pre=True)
 
 
 def main() -> NoReturn:
