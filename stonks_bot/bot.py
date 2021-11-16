@@ -87,17 +87,18 @@ Discovery:
 * /underval_growth (<count>) | /ug -> Show undervalued growth stonks.
 
 Sentiment:
-* /wallstreetbets (<sort={hot, rising, new} count>) | /wsb -> Show relevant r/ posts.
+* /wallstreetbets (<sort={hot, rising, new} count>) | /wsb -> Show relevant r/wallstreetbets posts.
 * /mauerstrassenwetten (<sort={hot, rising, new} count>) | /msw -> Zeige relevante r/mauerstrassenwetten Einträge.
 * /investing (<sort={hot, rising, new} count>) | /ri -> Show relevant r/investing posts.
 * /rstocks (<sort={hot, rising, new} count>) | /rs -> Show relevant r/stocks posts.
-* /gamestop (<sort={hot, rising, new} count>) | /gme -> Show relevant r/ posts.
-* /spielstopp (<sort={hot, rising, new} count>) | /rss -> Show relevant r/ posts.
-* /stockmarket (<sort={hot, rising, new} count>) | /rsm -> Show relevant r/ posts.
-* /daytrading (<sort={hot, rising, new} count>) | /rdt -> Show relevant r/ posts.
-* /pennystocks (<sort={hot, rising, new} count>) | /rps -> Show relevant r/ posts.
-* /cryptomarkets (<sort={hot, rising, new} count>) | /rcm -> Show relevant r/ posts.
-* /satoshistreetbets (<sort={hot, rising, new} count>) | /ssb -> Show relevant r/ posts.
+* /gamestop (<sort={hot, rising, new} count>) | /gme -> Show relevant r/gamestop posts.
+* /spielstopp (<sort={hot, rising, new} count>) | /rss -> Show relevant r/spielstopp posts.
+* /stockmarket (<sort={hot, rising, new} count>) | /rsm -> Show relevant r/stockmarket posts.
+* /daytrading (<sort={hot, rising, new} count>) | /rdt -> Show relevant r/daytrading posts.
+* /pennystocks (<sort={hot, rising, new} count>) | /rps -> Show relevant r/pennystocks posts.
+* /cryptomarkets (<sort={hot, rising, new} count>) | /rcm -> Show relevant r/cryptomarkets posts.
+* /satoshistreetbets (<sort={hot, rising, new} count>) | /ssb -> Show relevant r/satoshistreetbets posts.
+* /rsamoyedcoin (<sort={hot, rising, new} count>) | /rsc -> Show relevant r/samoyedcoin posts.
 * /popular_symbols (<sort={hot, rising, new} count>) | /ps -> Show popular symbols from Reddit.
 * /bullbear [<SYMBOLs>] | /bb -> Bull / Bear analysis for chosen symbols.
 * /stock_messages [<SYMBOLs>] | /sm -> Get the latest TwitStock messages for chosen symbols.
@@ -862,6 +863,19 @@ def details(update: Update, context: CallbackContext, reply: bool = True,
             chart(update, context, reply=reply, pre=True)
 
 
+@send_typing_action
+def r_samoyed_coin(update: Update, context: CallbackContext):
+    args = parse_reddit(update, context.args)
+
+    if not args:
+        return False
+
+    s = RedditAnalysis(context, update)
+    result = s.samoyedcoin(args['sort'], args['count'])
+
+    reply_message(update, result, parse_mode=ParseMode.HTML)
+
+
 def main() -> NoReturn:
     """Run bot."""
     persist = PicklePersistence(filename=f'{conf.PERSISTENCE_NAME}.pickle')
@@ -956,6 +970,8 @@ def main() -> NoReturn:
     dispatcher.add_handler(CommandHandler('p', price, run_async=True))
     dispatcher.add_handler(CommandHandler('details', details, run_async=False))
     dispatcher.add_handler(CommandHandler('d', details, run_async=False))
+    dispatcher.add_handler(CommandHandler('rsamoyedcoin', r_samoyed_coin, run_async=True))
+    dispatcher.add_handler(CommandHandler('rsc', r_samoyed_coin, run_async=True))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)

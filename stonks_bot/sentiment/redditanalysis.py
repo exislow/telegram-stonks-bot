@@ -101,11 +101,16 @@ class RedditAnalysis(object):
 
         return result
 
+    def samoyedcoin(self, sort: str = 'hot', count: int = 15):
+        result = self._posts('SamoyedCoin', [], sort, count)
+
+        return result
+
     def _posts(self, sub: str, flair: List[Union[str, None]], sort: str = 'hot', limit: int = 15) -> str:
         praw_api = self._get_reddit_client()
         flair_str = 'flair:'
         flair_str += f"({' OR '.join(flair)})" if len(
-            flair) > 0 else '(NOT asdfghdfdafsgdhfffdsgh)'  # Something never occurse
+            flair) > 0 else '(NOT asdfghdfdafsgdhfffdsgh)'  # Something never occurs
         submissions = praw_api.subreddit(sub).search(flair_str, sort=sort, limit=limit)
         columns = ['created_utc', 'subreddit', 'title', 'link', 'flair', 'score', 'comments_count',
                    'upvote_ratio']
@@ -130,7 +135,7 @@ class RedditAnalysis(object):
         result_html = ''
 
         for idx, r in df.iterrows():
-            result_html += f'* <a href="{r[columns[3]]}">{r[columns[2]]}</a>\n -> <b>{r[columns[4]]}</b>; Score:'
+            result_html += f'* <a href="{r[columns[3]]}">{r[columns[2]].replace("<", "&lt;").replace(">", "&gt;")}</a>\n -> <b>{r[columns[4]]}</b>; Score:'
             result_html += f'{r[columns[5]]}; # Com.: {r[columns[6]]}; UpV Ratio: {r[columns[-1]]}\n'
 
         return result_html
