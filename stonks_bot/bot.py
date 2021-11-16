@@ -890,8 +890,8 @@ def main() -> NoReturn:
     dispatcher.add_handler(CommandHandler('sl', stonk_list, run_async=True))
     dispatcher.add_handler(CommandHandler('list_price', list_price, run_async=True))
     dispatcher.add_handler(CommandHandler('lp', list_price, run_async=True))
-    dispatcher.add_handler(CommandHandler('chart', chart, run_async=True))
-    dispatcher.add_handler(CommandHandler('c', chart, run_async=True))
+    dispatcher.add_handler(CommandHandler('chart', chart, run_async=False))
+    dispatcher.add_handler(CommandHandler('c', chart, run_async=False))
     dispatcher.add_handler(CommandHandler('discovery', discovery_websites, run_async=True))
     dispatcher.add_handler(CommandHandler('di', discovery_websites, run_async=True))
     dispatcher.add_handler(CommandHandler('sector_performance', sector_performance, run_async=True))
@@ -954,8 +954,8 @@ def main() -> NoReturn:
     dispatcher.add_handler(CommandHandler('ts', trending_symbols, run_async=True))
     dispatcher.add_handler(CommandHandler('price', price, run_async=True))
     dispatcher.add_handler(CommandHandler('p', price, run_async=True))
-    dispatcher.add_handler(CommandHandler('details', details, run_async=True))
-    dispatcher.add_handler(CommandHandler('d', details, run_async=True))
+    dispatcher.add_handler(CommandHandler('details', details, run_async=False))
+    dispatcher.add_handler(CommandHandler('d', details, run_async=False))
 
     # ...and the error handler
     dispatcher.add_error_handler(error_handler, run_async=True)
