@@ -283,8 +283,8 @@ class Stonk(object):
         # Lists of dictionaries and row index.
         df = pd.DataFrame(data, index=[self.symbol])
         df_T = df.T
-        tablefmt = simple_separated_format(': ')
-        text = tabulate(df_T, tablefmt=tablefmt, colalign=('right', 'decimal'))
+        table_fmt = simple_separated_format(': ')
+        text = tabulate(df_T, tablefmt=table_fmt, colalign=('right', 'decimal'))
         text = text.replace(str(si_volume_f), si_volume)
         text = text.replace(str(si_cap_f), si_cap)
         text = ''.join((f'       {self.symbol}\n',
