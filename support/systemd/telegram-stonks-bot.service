@@ -1,7 +1,7 @@
 [Unit]
 Description=Telegram Stonks Bot
-After=network.service
-Requires=network.service
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
